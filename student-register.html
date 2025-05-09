@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Registration</title>
+</head>
+<body>
+  <form id="registerForm" enctype="multipart/form-data">
+    <input type="text" id="fullname" placeholder="Full Name" required />
+    <input type="text" id="matric" placeholder="Matric Number" required />
+    <input type="tel" id="phone" placeholder="Phone Number" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <input type="file" id="passport" accept="image/*" required />
+    <button type="submit">Register</button>
+  </form>
+  <p id="message"></p>
+  <script src="student-register.js"></script>
+</body>
+</html>
