@@ -101,3 +101,4 @@ app.post("/api/students/login", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`CBT server running at http://localhost:${PORT}`);
 });
+
