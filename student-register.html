@@ -65,16 +65,30 @@
   </form>
 
   <script>
-    const form = document.getElementById("registerForm");
+    // Student Registration Logic
+    const registerForm = document.getElementById("registerForm");
     const responseMsg = document.getElementById("responseMsg");
 
-    form.addEventListener("submit", async (e) => {
+    registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(form);
+      const formData = new FormData(registerForm);
+      const matric = formData.get("matric");
 
-      responseMsg.textContent = "Registering...";
-      responseMsg.style.color = "white";
+      // Auto-detect department
+      let department = "";
+      if (matric.startsWith("S/")) department = "Science Laboratory Technology";
+      else if (matric.startsWith("Cos/")) department = "Computer Science";
+      else if (matric.startsWith("Coe/")) department = "Computer Engineering";
+      else if (matric.startsWith("B/")) department = "Business Administration";
+      else if (matric.startsWith("Est/")) department = "Estate Management";
+      else if (matric.startsWith("E/")) department = "Electrical Engineering";
+      else if (matric.startsWith("M/")) department = "Mass Communication";
+      else if (matric.startsWith("A/")) department = "Accountancy";
+      else if (matric.startsWith("Mlt/")) department = "Medical Laboratory Technology";
+      else department = "Unknown";
+
+      formData.append("department", department);
 
       try {
         const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
@@ -86,7 +100,7 @@
         responseMsg.textContent = data.message;
         responseMsg.style.color = res.ok ? "lightgreen" : "red";
 
-        if (res.ok) form.reset();
+        if (res.ok) registerForm.reset();
       } catch (err) {
         responseMsg.textContent = "Registration failed. Please try again.";
         responseMsg.style.color = "red";
