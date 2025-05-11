@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "cbt-server.js",
   "scripts": {
-    "start": "node cbt-server.js"
+    "start": "node cbt-server.js",
     "license": "MIT"
   },
   "dependencies": {
