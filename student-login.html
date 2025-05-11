@@ -53,25 +53,32 @@
   </form>
 
   <script>
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+    // Student Login Logic
+    const loginForm = document.getElementById("loginForm");
+    const loginResponseMsg = document.getElementById("loginResponseMsg");
+
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const matric = document.getElementById("matric").value;
-      const password = document.getElementById("password").value;
-      const message = document.getElementById("message");
+      const formData = new FormData(loginForm);
+      const matric = formData.get("matric");
+      const password = formData.get("password");
 
-      const response = await fetch("/api/students/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matric, password })
-      });
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/students/login", {
+          method: "POST",
+          body: JSON.stringify({ matric, password }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-      const result = await response.json();
-      message.textContent = result.message;
-
-      if (response.ok) {
-        localStorage.setItem("student", JSON.stringify(result.student));
-        setTimeout(() => window.location.href = "/student-dashboard.html", 1500);
+        const data = await res.json();
+        loginResponseMsg.textContent = data.message;
+        loginResponseMsg.style.color = res.ok ? "lightgreen" : "red";
+      } catch (err) {
+        loginResponseMsg.textContent = "Login failed. Please try again.";
+        loginResponseMsg.style.color = "red";
       }
     });
   </script>
