@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .student-table th, .student-table td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: left;
+    }
+    .student-table th {
+      background-color: #333;
+    }
+    img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CBT Student Dashboard</h1>
+
+  <h2>Registered Students</h2>
+  <table class="student-table" id="studentsTable">
+    <thead>
+      <tr>
+        <th>Passport</th>
+        <th>Full Name</th>
+        <th>Matric No</th>
+        <th>Department</th>
+        <th>Phone</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Active Login Sessions</h2>
+  <ul id="sessionList"></ul>
+
+  <script>
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/students/dashboard");
+        const data = await res.json();
+
+        const tableBody = document.querySelector("#studentsTable tbody");
+        tableBody.innerHTML = "";
+
+        data.students.forEach((student) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${student.passport}" alt="Passport" /></td>
+            <td>${student.name}</td>
+            <td>${student.matric}</td>
+            <td>${student.department}</td>
+            <td>${student.phone}</td>
+            <td>${student.email}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        const sessionList = document.getElementById("sessionList");
+        sessionList.innerHTML = "";
+        data.sessions.forEach((session) => {
+          const li = document.createElement("li");
+          li.textContent = session;
+          sessionList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      }
+    }
+
+    fetchDashboardData();
+  </script>
+</body>
+</html>
