@@ -4,6 +4,7 @@
   "main": "cbt-server.js",
   "scripts": {
     "start": "node cbt-server.js"
+    "license": "MIT"
   },
   "dependencies": {
     "express": "^4.18.2",
