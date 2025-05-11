@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Corrected for Render compatibility
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -33,6 +33,9 @@ const studentSchema = new mongoose.Schema({
 });
 
 const Student = mongoose.model("Student", studentSchema);
+
+// Session tracking
+const studentSessions = new Set();
 
 // Multer config
 const storage = multer.diskStorage({
@@ -95,10 +98,30 @@ app.post("/api/students/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid matric number or password." });
   }
 
+  studentSessions.add(matric);
+
   res.json({ message: "Login successful", student });
+});
+
+// Dashboard endpoint
+app.get("/api/students/dashboard", async (req, res) => {
+  try {
+    const students = await Student.find().select("-password");
+    const formattedStudents = students.map((s) => ({
+      ...s._doc,
+      passport: s.passport ? `${req.protocol}://${req.get("host")}/uploads/${s.passport}` : null
+    }));
+
+    res.json({
+      students: formattedStudents,
+      sessions: Array.from(studentSessions),
+    });
+  } catch (error) {
+    console.error("Dashboard fetch error:", error);
+    res.status(500).json({ message: "Failed to load dashboard data" });
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`CBT server running at http://localhost:${PORT}`);
 });
-
