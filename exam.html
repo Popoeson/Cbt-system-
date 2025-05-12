@@ -47,6 +47,20 @@
       display: block;
       margin: 8px 0;
     }
+    .submit-btn {
+      display: block;
+      margin: 30px auto;
+      padding: 10px 25px;
+      font-size: 16px;
+      background-color: #00bfff;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .submit-btn:hover {
+      background-color: #009acd;
+    }
   </style>
 </head>
 <body>
@@ -66,11 +80,12 @@
     <!-- Questions will be dynamically inserted here -->
   </div>
 
-  <script>
-    // Example data
-    const student = JSON.parse(localStorage.getItem("student")); // Assumes student data is stored after login
+  <button class="submit-btn" onclick="submitExam()">Submit Exam</button>
 
-    // Set student info
+  <script>
+    const student = JSON.parse(localStorage.getItem("student"));
+    const examId = localStorage.getItem("selectedExamId");
+
     if (student) {
       document.getElementById("studentName").textContent = student.name;
       document.getElementById("studentMatric").textContent = student.matric;
@@ -78,7 +93,7 @@
       document.getElementById("studentPhoto").src = `/uploads/${student.passport}`;
     }
 
-    // Countdown timer (e.g., 10 minutes)
+    // Countdown timer (10 minutes)
     let timeLeft = 10 * 60;
     const timerEl = document.getElementById("timer");
     const interval = setInterval(() => {
@@ -87,12 +102,12 @@
       timerEl.textContent = `Time Left: ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
       if (--timeLeft < 0) {
         clearInterval(interval);
-        alert("Time's up!");
-        // Submit exam automatically here
+        alert("Time's up! Submitting your exam...");
+        submitExam();
       }
     }, 1000);
 
-    // Example question rendering
+    // Placeholder questions (replace with fetch from backend later)
     const questions = [
       {
         question: "What is the capital of Nigeria?",
@@ -118,6 +133,39 @@
       `;
       container.appendChild(div);
     });
+
+    function submitExam() {
+      const answers = [];
+      document.querySelectorAll(".question").forEach((qDiv, index) => {
+        const selected = qDiv.querySelector(`input[name="q${index}"]:checked`);
+        answers.push({
+          questionNumber: index + 1,
+          answer: selected ? selected.value : null
+        });
+      });
+
+      fetch("https://cbt-system.onrender.com/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: student.matric,
+          examId,
+          answers
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to submit exam.");
+        return res.json();
+      })
+      .then(data => {
+        alert("Exam submitted successfully!");
+        window.location.href = "submission-success.html";
+      })
+      .catch(err => {
+        console.error("Submission error:", err);
+        alert("Error submitting exam.");
+      });
+    }
   </script>
 </body>
 </html>
