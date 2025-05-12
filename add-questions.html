@@ -47,20 +47,19 @@
   <button type="button" onclick="submitQuestions()">Submit All Questions</button>
 
   <script>
-    // Retrieve exam course details from localStorage
+    const BASE_URL = "https://cbt-system.onrender.com"; // Your backend URL
+
     const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
     const questionsForm = document.getElementById("questionsForm");
     const courseHeader = document.getElementById("courseHeader");
 
     if (!exam.course || !exam.courseCode || !exam.numQuestions) {
       alert("Missing exam course details.");
-      window.location.href = "set-exam.html"; // Redirect to course setup page if details are missing
+      window.location.href = "set-exam.html";
     }
 
-    // Set page header
     courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
 
-    // Dynamically create question input fields based on number of questions
     for (let i = 1; i <= exam.numQuestions; i++) {
       const block = document.createElement("div");
       block.className = "question-block";
@@ -83,12 +82,10 @@
       questionsForm.appendChild(block);
     }
 
-    // Submit the questions to the backend
     async function submitQuestions() {
       const questionBlocks = document.querySelectorAll(".question-block");
       const questions = [];
 
-      // Collect the question data
       for (let block of questionBlocks) {
         const questionText = block.querySelector("textarea").value.trim();
         const a = block.querySelector('input[name="a"]').value.trim();
@@ -110,8 +107,7 @@
       }
 
       try {
-        // Send POST request to save the questions
-        const response = await fetch(`http://localhost:3000/api/exams/${exam.courseCode}/questions`, {
+        const response = await fetch(`${BASE_URL}/api/exams/${exam.courseCode}/questions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -123,7 +119,7 @@
 
         if (response.ok) {
           alert("Questions submitted successfully.");
-          window.location.href = "exam-courses.html"; // Redirect to exam course page after success
+          window.location.href = "exam-courses.html";
         } else {
           alert("Failed to submit questions: " + result.message);
         }
