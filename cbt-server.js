@@ -1,3 +1,5 @@
+ at http://localhost:${PORT}`);
+});
 const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
@@ -21,28 +23,16 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
 }).then(() => console.log("Connected to MongoDB"))
   .catch(err => console.error("MongoDB connection failed:", err));
 
-// Mongoose schema
-const studentSchema = new mongoose.Schema({
-  name: String,
-  matric: String,
-  department: String,
-  phone: String,
-  email: String,
-  password: String,
-  passport: String,
-});
-
-const Student = mongoose.model("Student", studentSchema);
-
-// Session tracking
-const studentSessions = new Set();
+// Ensure uploads folder exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 // Multer config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = "uploads";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
@@ -67,6 +57,44 @@ function getDepartmentFromMatric(matric) {
   };
   return map[prefix] || "Unknown";
 }
+
+// Session tracking
+const studentSessions = new Set();
+
+// Mongoose Schemas
+const studentSchema = new mongoose.Schema({
+  name: String,
+  matric: String,
+  department: String,
+  phone: String,
+  email: String,
+  password: String,
+  passport: String,
+});
+
+const questionSchema = new mongoose.Schema({
+  course: String,
+  courseCode: String,
+  questions: [
+    {
+      question: String,
+      options: {
+        a: String,
+        b: String,
+        c: String,
+        d: String,
+      },
+      correctAnswer: String
+    }
+  ],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Student = mongoose.model("Student", studentSchema);
+const Question = mongoose.model("Question", questionSchema);
 
 // Register endpoint
 app.post("/api/students/register", upload.single("passport"), async (req, res) => {
@@ -99,7 +127,6 @@ app.post("/api/students/login", async (req, res) => {
   }
 
   studentSessions.add(matric);
-
   res.json({ message: "Login successful", student });
 });
 
@@ -119,6 +146,24 @@ app.get("/api/students/dashboard", async (req, res) => {
   } catch (error) {
     console.error("Dashboard fetch error:", error);
     res.status(500).json({ message: "Failed to load dashboard data" });
+  }
+});
+
+// Set exam questions endpoint
+app.post("/api/exams/questions", async (req, res) => {
+  const { course, courseCode, questions } = req.body;
+
+  if (!course || !courseCode || !Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ message: "Course, course code and at least one question are required." });
+  }
+
+  try {
+    const exam = new Question({ course, courseCode, questions });
+    await exam.save();
+    res.json({ message: "Exam questions saved successfully." });
+  } catch (error) {
+    console.error("Error saving questions:", error);
+    res.status(500).json({ message: "Failed to save questions." });
   }
 });
 
