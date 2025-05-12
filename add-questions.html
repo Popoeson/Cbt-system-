@@ -44,20 +44,23 @@
 <body>
   <h2 id="courseHeader">Add Questions</h2>
   <form id="questionsForm"></form>
-  <button onclick="submitQuestions()">Submit All Questions</button>
+  <button type="button" onclick="submitQuestions()">Submit All Questions</button>
 
   <script>
+    // Retrieve exam course details from localStorage
     const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
     const questionsForm = document.getElementById("questionsForm");
     const courseHeader = document.getElementById("courseHeader");
 
     if (!exam.course || !exam.courseCode || !exam.numQuestions) {
       alert("Missing exam course details.");
-      window.location.href = "set-exam.html";
+      window.location.href = "set-exam.html"; // Redirect to course setup page if details are missing
     }
 
+    // Set page header
     courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
 
+    // Dynamically create question input fields based on number of questions
     for (let i = 1; i <= exam.numQuestions; i++) {
       const block = document.createElement("div");
       block.className = "question-block";
@@ -80,29 +83,54 @@
       questionsForm.appendChild(block);
     }
 
-    function submitQuestions() {
+    // Submit the questions to the backend
+    async function submitQuestions() {
       const questionBlocks = document.querySelectorAll(".question-block");
       const questions = [];
 
-      questionBlocks.forEach(block => {
-        const question = block.querySelector("textarea").value.trim();
+      // Collect the question data
+      for (let block of questionBlocks) {
+        const questionText = block.querySelector("textarea").value.trim();
         const a = block.querySelector('input[name="a"]').value.trim();
         const b = block.querySelector('input[name="b"]').value.trim();
         const c = block.querySelector('input[name="c"]').value.trim();
         const d = block.querySelector('input[name="d"]').value.trim();
-        const correct = block.querySelector("select").value;
+        const correctAnswer = block.querySelector("select").value;
 
-        if (!question || !a || !b || !c || !d || !correct) {
+        if (!questionText || !a || !b || !c || !d || !correctAnswer) {
           alert("Please fill out all fields.");
           return;
         }
 
-        questions.push({ question, options: { a, b, c, d }, correct });
-      });
+        questions.push({
+          questionText,
+          options: { a, b, c, d },
+          correctAnswer,
+        });
+      }
 
-      // Store or send questions to backend
-      console.log("Saving questions:", questions);
-      alert("Questions submitted successfully.");
+      try {
+        // Send POST request to save the questions
+        const response = await fetch(`http://localhost:3000/api/exams/${exam.courseCode}/questions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ questions }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert("Questions submitted successfully.");
+          window.location.href = "exam-courses.html"; // Redirect to exam course page after success
+        } else {
+          alert("Failed to submit questions: " + result.message);
+        }
+      } catch (err) {
+        console.error("Submission error:", err);
+        alert("An error occurred while submitting the questions.");
+      }
     }
   </script>
 </body>
