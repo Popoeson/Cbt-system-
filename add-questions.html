@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Exam Questions</title>
+  <style>
+    body {
+      background-color: #1c1c1c;
+      color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 0;
+      min-height: 100vh;
+    }
+    form {
+      background-color: #2c2c2c;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      width: 90%;
+      max-width: 600px;
+    }
+    h2, h3 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #00aaff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0077aa;
+    }
+  </style>
+</head>
+<body>
+  <form id="questionForm">
+    <h2 id="courseInfo">Add Questions</h2>
+    <textarea id="question" placeholder="Enter question text" required></textarea>
+    <input type="text" id="optionA" placeholder="Option A" required />
+    <input type="text" id="optionB" placeholder="Option B" required />
+    <input type="text" id="optionC" placeholder="Option C" required />
+    <input type="text" id="optionD" placeholder="Option D" required />
+    <select id="correctAnswer" required>
+      <option value="">Select Correct Answer</option>
+      <option value="a">A</option>
+      <option value="b">B</option>
+      <option value="c">C</option>
+      <option value="d">D</option>
+    </select>
+    <button type="submit">Save Question</button>
+    <p id="responseMsg"></p>
+  </form>
+
+  <script>
+    // Load course info
+    const courseInfo = JSON.parse(localStorage.getItem("examCourse"));
+    if (!courseInfo) {
+      alert("No course info found. Please set exam first.");
+      window.location.href = "set-exam.html"; // go back
+    } else {
+      document.getElementById("courseInfo").textContent = `Course: ${courseInfo.course} (${courseInfo.courseCode})`;
+    }
+
+    const form = document.getElementById("questionForm");
+    const msg = document.getElementById("responseMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const questionData = {
+        course: courseInfo.course,
+        courseCode: courseInfo.courseCode,
+        question: document.getElementById("question").value.trim(),
+        options: {
+          a: document.getElementById("optionA").value.trim(),
+          b: document.getElementById("optionB").value.trim(),
+          c: document.getElementById("optionC").value.trim(),
+          d: document.getElementById("optionD").value.trim(),
+        },
+        correctAnswer: document.getElementById("correctAnswer").value,
+      };
+
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/questions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(questionData),
+        });
+
+        const data = await res.json();
+        msg.textContent = data.message;
+        msg.style.color = res.ok ? "lightgreen" : "red";
+        if (res.ok) form.reset();
+      } catch (err) {
+        msg.textContent = "Failed to save question.";
+        msg.style.color = "red";
+      }
+    });
+  </script>
+</body>
+    </html>
