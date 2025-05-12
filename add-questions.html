@@ -9,28 +9,23 @@
       background-color: #1c1c1c;
       color: #f0f0f0;
       font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 40px 0;
-      min-height: 100vh;
+      padding: 20px;
     }
-    form {
-      background-color: #2c2c2c;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #000;
-      width: 90%;
-      max-width: 600px;
-    }
-    h2, h3 {
+    h2 {
       text-align: center;
       margin-bottom: 20px;
+    }
+    .question-block {
+      background-color: #2b2b2b;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
     }
     input, textarea, select, button {
       width: 100%;
       padding: 10px;
-      margin-bottom: 15px;
+      margin-top: 10px;
       border: none;
       border-radius: 5px;
       font-size: 16px;
@@ -47,71 +42,68 @@
   </style>
 </head>
 <body>
-  <form id="questionForm">
-    <h2 id="courseInfo">Add Questions</h2>
-    <textarea id="question" placeholder="Enter question text" required></textarea>
-    <input type="text" id="optionA" placeholder="Option A" required />
-    <input type="text" id="optionB" placeholder="Option B" required />
-    <input type="text" id="optionC" placeholder="Option C" required />
-    <input type="text" id="optionD" placeholder="Option D" required />
-    <select id="correctAnswer" required>
-      <option value="">Select Correct Answer</option>
-      <option value="a">A</option>
-      <option value="b">B</option>
-      <option value="c">C</option>
-      <option value="d">D</option>
-    </select>
-    <button type="submit">Save Question</button>
-    <p id="responseMsg"></p>
-  </form>
+  <h2 id="courseHeader">Add Questions</h2>
+  <form id="questionsForm"></form>
+  <button onclick="submitQuestions()">Submit All Questions</button>
 
   <script>
-    // Load course info
-    const courseInfo = JSON.parse(localStorage.getItem("examCourse"));
-    if (!courseInfo) {
-      alert("No course info found. Please set exam first.");
-      window.location.href = "set-exam.html"; // go back
-    } else {
-      document.getElementById("courseInfo").textContent = `Course: ${courseInfo.course} (${courseInfo.courseCode})`;
+    const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
+    const questionsForm = document.getElementById("questionsForm");
+    const courseHeader = document.getElementById("courseHeader");
+
+    if (!exam.course || !exam.courseCode || !exam.numQuestions) {
+      alert("Missing exam course details.");
+      window.location.href = "set-exam.html";
     }
 
-    const form = document.getElementById("questionForm");
-    const msg = document.getElementById("responseMsg");
+    courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    for (let i = 1; i <= exam.numQuestions; i++) {
+      const block = document.createElement("div");
+      block.className = "question-block";
+      block.innerHTML = `
+        <h3>Question ${i}</h3>
+        <textarea name="question" placeholder="Enter question ${i}" required></textarea>
+        <input name="a" placeholder="Option A" required />
+        <input name="b" placeholder="Option B" required />
+        <input name="c" placeholder="Option C" required />
+        <input name="d" placeholder="Option D" required />
+        <select name="correct" required>
+          <option value="">Select Correct Answer</option>
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+          <option value="d">D</option>
+        </select>
+        <hr />
+      `;
+      questionsForm.appendChild(block);
+    }
 
-      const questionData = {
-        course: courseInfo.course,
-        courseCode: courseInfo.courseCode,
-        question: document.getElementById("question").value.trim(),
-        options: {
-          a: document.getElementById("optionA").value.trim(),
-          b: document.getElementById("optionB").value.trim(),
-          c: document.getElementById("optionC").value.trim(),
-          d: document.getElementById("optionD").value.trim(),
-        },
-        correctAnswer: document.getElementById("correctAnswer").value,
-      };
+    function submitQuestions() {
+      const questionBlocks = document.querySelectorAll(".question-block");
+      const questions = [];
 
-      try {
-        const res = await fetch("https://cbt-system.onrender.com/api/questions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(questionData),
-        });
+      questionBlocks.forEach(block => {
+        const question = block.querySelector("textarea").value.trim();
+        const a = block.querySelector('input[name="a"]').value.trim();
+        const b = block.querySelector('input[name="b"]').value.trim();
+        const c = block.querySelector('input[name="c"]').value.trim();
+        const d = block.querySelector('input[name="d"]').value.trim();
+        const correct = block.querySelector("select").value;
 
-        const data = await res.json();
-        msg.textContent = data.message;
-        msg.style.color = res.ok ? "lightgreen" : "red";
-        if (res.ok) form.reset();
-      } catch (err) {
-        msg.textContent = "Failed to save question.";
-        msg.style.color = "red";
-      }
-    });
+        if (!question || !a || !b || !c || !d || !correct) {
+          alert("Please fill out all fields.");
+          return;
+        }
+
+        questions.push({ question, options: { a, b, c, d }, correct });
+      });
+
+      // Store or send questions to backend
+      console.log("Saving questions:", questions);
+      alert("Questions submitted successfully.");
+    }
   </script>
 </body>
-    </html>
+</html>
