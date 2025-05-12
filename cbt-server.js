@@ -179,6 +179,17 @@ app.post("/api/exams/:courseCode/questions", async (req, res) => {
   res.json({ message: "Questions saved successfully" });
 });
 
+// Fetch All Exams (for course list interface)
+app.get("/api/exams", async (req, res) => {
+  try {
+    const exams = await Exam.find();
+    res.json(exams);
+  } catch (err) {
+    console.error("Error fetching exams:", err);
+    res.status(500).json({ message: "Unable to fetch exam list." });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`CBT server running at http://localhost:${PORT}`);
