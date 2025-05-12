@@ -16,18 +16,22 @@
       margin: 0;
     }
     form {
-      background-color: #2c2c2c;
+      background-color: #2b2b2b;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px #000;
-      width: 100%;
+      width: 90%;
       max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
     input, button {
       display: block;
       width: 100%;
       margin-bottom: 15px;
-      padding: 12px;
+      padding: 10px;
       border: none;
       border-radius: 5px;
       font-size: 16px;
@@ -44,26 +48,25 @@
   </style>
 </head>
 <body>
-  <form id="courseForm">
-    <h2>Set Exam</h2>
-    <input type="text" id="course" name="course" placeholder="Course Title" required />
-    <input type="text" id="courseCode" name="courseCode" placeholder="Course Code" required />
-    <button type="submit">Set Exam Question</button>
+  <form id="setExamForm">
+    <h2>Set Exam Course</h2>
+    <input type="text" id="course" placeholder="Course Title" required />
+    <input type="text" id="courseCode" placeholder="Course Code" required />
+    <input type="number" id="numQuestions" placeholder="Number of Questions" required min="1" />
+    <button type="submit">Set Exam Questions</button>
   </form>
 
   <script>
-    document.getElementById("courseForm").addEventListener("submit", (e) => {
+    document.getElementById("setExamForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const course = document.getElementById("course").value.trim();
       const courseCode = document.getElementById("courseCode").value.trim();
+      const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
 
-      if (course && courseCode) {
-        // Store course info temporarily (you can adjust this as needed)
-        localStorage.setItem("examCourse", JSON.stringify({ course, courseCode }));
+      const examCourse = { course, courseCode, numQuestions };
 
-        // Redirect to the page to add questions
-        window.location.href = "add-questions.html"; // replace with your actual question page
-      }
+      localStorage.setItem("examCourse", JSON.stringify(examCourse));
+      window.location.href = "add-questions.html";
     });
   </script>
 </body>
