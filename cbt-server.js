@@ -1,5 +1,3 @@
- at http://localhost:${PORT}`);
-});
 const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
@@ -23,8 +21,44 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
 }).then(() => console.log("Connected to MongoDB"))
   .catch(err => console.error("MongoDB connection failed:", err));
 
+// Mongoose Schemas
+const studentSchema = new mongoose.Schema({
+  name: String,
+  matric: String,
+  department: String,
+  phone: String,
+  email: String,
+  password: String,
+  passport: String,
+});
+
+const examSchema = new mongoose.Schema({
+  course: String,
+  courseCode: String,
+  numQuestions: Number,
+});
+
+const questionSchema = new mongoose.Schema({
+  courseCode: String,
+  questionText: String,
+  options: {
+    a: String,
+    b: String,
+    c: String,
+    d: String,
+  },
+  correctAnswer: String,
+});
+
+const Student = mongoose.model("Student", studentSchema);
+const Exam = mongoose.model("Exam", examSchema);
+const Question = mongoose.model("Question", questionSchema);
+
+// Session tracking
+const studentSessions = new Set();
+
 // Ensure uploads folder exists
-const uploadDir = path.join(__dirname, "uploads");
+const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
@@ -58,45 +92,7 @@ function getDepartmentFromMatric(matric) {
   return map[prefix] || "Unknown";
 }
 
-// Session tracking
-const studentSessions = new Set();
-
-// Mongoose Schemas
-const studentSchema = new mongoose.Schema({
-  name: String,
-  matric: String,
-  department: String,
-  phone: String,
-  email: String,
-  password: String,
-  passport: String,
-});
-
-const questionSchema = new mongoose.Schema({
-  course: String,
-  courseCode: String,
-  questions: [
-    {
-      question: String,
-      options: {
-        a: String,
-        b: String,
-        c: String,
-        d: String,
-      },
-      correctAnswer: String
-    }
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-const Student = mongoose.model("Student", studentSchema);
-const Question = mongoose.model("Question", questionSchema);
-
-// Register endpoint
+// Student Registration
 app.post("/api/students/register", upload.single("passport"), async (req, res) => {
   const { name, matric, phone, email, password } = req.body;
   const passport = req.file ? req.file.filename : null;
@@ -117,7 +113,7 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
   res.json({ message: "Student registered successfully.", student });
 });
 
-// Login endpoint
+// Student Login
 app.post("/api/students/login", async (req, res) => {
   const { matric, password } = req.body;
   const student = await Student.findOne({ matric, password });
@@ -130,43 +126,60 @@ app.post("/api/students/login", async (req, res) => {
   res.json({ message: "Login successful", student });
 });
 
-// Dashboard endpoint
+// Dashboard
 app.get("/api/students/dashboard", async (req, res) => {
   try {
     const students = await Student.find().select("-password");
-    const formattedStudents = students.map((s) => ({
+    const formatted = students.map((s) => ({
       ...s._doc,
       passport: s.passport ? `${req.protocol}://${req.get("host")}/uploads/${s.passport}` : null
     }));
 
     res.json({
-      students: formattedStudents,
+      students: formatted,
       sessions: Array.from(studentSessions),
     });
   } catch (error) {
-    console.error("Dashboard fetch error:", error);
-    res.status(500).json({ message: "Failed to load dashboard data" });
+    console.error("Dashboard error:", error);
+    res.status(500).json({ message: "Failed to load dashboard" });
   }
 });
 
-// Set exam questions endpoint
-app.post("/api/exams/questions", async (req, res) => {
-  const { course, courseCode, questions } = req.body;
+// Store Exam Course
+app.post("/api/exams", async (req, res) => {
+  const { course, courseCode, numQuestions } = req.body;
 
-  if (!course || !courseCode || !Array.isArray(questions) || questions.length === 0) {
-    return res.status(400).json({ message: "Course, course code and at least one question are required." });
+  if (!course || !courseCode || !numQuestions) {
+    return res.status(400).json({ message: "All fields are required." });
   }
 
-  try {
-    const exam = new Question({ course, courseCode, questions });
-    await exam.save();
-    res.json({ message: "Exam questions saved successfully." });
-  } catch (error) {
-    console.error("Error saving questions:", error);
-    res.status(500).json({ message: "Failed to save questions." });
-  }
+  const exam = new Exam({ course, courseCode, numQuestions });
+  await exam.save();
+
+  res.json({ message: "Exam created", exam });
 });
 
+// Store Exam Questions
+app.post("/api/exams/:courseCode/questions", async (req, res) => {
+  const { courseCode } = req.params;
+  const { questions } = req.body;
+
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ message: "No questions provided." });
+  }
+
+  const formatted = questions.map(q => ({
+    courseCode,
+    questionText: q.questionText,
+    options: q.options,
+    correctAnswer: q.correctAnswer
+  }));
+
+  await Question.insertMany(formatted);
+  res.json({ message: "Questions saved successfully" });
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`CBT server running at http://localhost:${PORT}`);
 });
