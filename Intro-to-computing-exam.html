@@ -2,148 +2,152 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Take Exam - Introduction to Computing</title>
+  <title>Take Exam</title>
   <style>
     body {
-      background-color: #1e1e1e;
-      color: #f0f0f0;
       font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      margin: 0;
       padding: 20px;
     }
-    .header {
+    #student-info {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
     }
-    .timer {
-      font-size: 1.2em;
+    #student-info img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-right: 20px;
+    }
+    #timer {
+      font-size: 18px;
       font-weight: bold;
-      color: #ff5555;
+      color: #ff5252;
+      margin-left: auto;
     }
     .question {
-      margin-top: 20px;
+      margin-bottom: 20px;
       padding: 15px;
-      background-color: #2a2a2a;
+      background: #2e2e2e;
       border-radius: 8px;
+    }
+    .question h3 {
+      margin: 0 0 10px;
     }
     button {
       padding: 10px 20px;
-      margin-top: 20px;
-      font-weight: bold;
-      background-color: #0088cc;
-      color: white;
+      font-size: 16px;
       border: none;
-      border-radius: 5px;
+      background: #007bff;
+      color: white;
       cursor: pointer;
+      border-radius: 5px;
     }
     button:hover {
-      background-color: #0077b3;
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h2>Introduction to Computing (CSC101)</h2>
-    <div class="timer" id="timer">Loading timer...</div>
+
+<div id="student-info">
+  <img id="passport" src="" alt="Passport">
+  <div>
+    <div id="name"></div>
+    <div id="matric"></div>
+    <div id="department"></div>
   </div>
+  <div id="timer">Time Left: --:--</div>
+</div>
 
-  <div id="studentInfo"></div>
-  <form id="examForm"></form>
-  <button onclick="submitExam()">Submit Exam</button>
+<h2 id="exam-title">Exam</h2>
+<div id="questions"></div>
+<button onclick="submitExam()">Submit Exam</button>
 
-  <script>
-    const courseCode = "COM101";
-    const duration = 5 * 60; // 5 minutes
-    let timeLeft = duration;
-    let interval;
-    let student = JSON.parse(localStorage.getItem("student"));
+<script>
+  const student = JSON.parse(localStorage.getItem("loggedInStudent"));
+  const examCode = localStorage.getItem("selectedExam");
 
-    if (!student) {
-      alert("Student not logged in.");
-      location.href = "student-login.html";
+  if (!student || !examCode) {
+    alert("Student not logged in or exam not selected.");
+    window.location.href = "index.html";
+  }
+
+  document.getElementById("passport").src = student.passport;
+  document.getElementById("name").textContent = student.name;
+  document.getElementById("matric").textContent = student.matric;
+  document.getElementById("department").textContent = student.department;
+
+  let timeLeft = 900; // 15 minutes
+
+  function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById("timer").textContent = `Time Left: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+    if (timeLeft <= 0) {
+      alert("Time is up! Submitting exam.");
+      submitExam();
+    } else {
+      timeLeft--;
     }
+  }
 
-    document.getElementById("studentInfo").innerHTML = `
-      <p><strong>Name:</strong> ${student.name}</p>
-      <p><strong>Matric:</strong> ${student.matric}</p>
-      <p><strong>Department:</strong> ${student.department}</p>
-    `;
+  setInterval(updateTimer, 1000);
+  updateTimer();
 
-    function startTimer() {
-      interval = setInterval(() => {
-        if (timeLeft <= 0) {
-          clearInterval(interval);
-          alert("Time is up! Submitting automatically.");
-          submitExam();
-        } else {
-          const min = Math.floor(timeLeft / 60);
-          const sec = timeLeft % 60;
-          document.getElementById("timer").textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-          timeLeft--;
-        }
-      }, 1000);
-    }
+  async function loadQuestions() {
+    const res = await fetch(`/api/exams/${examCode}/questions`);
+    const data = await res.json();
+    document.getElementById("exam-title").textContent = `Exam: ${data.courseCode}`;
 
-    async function loadQuestions() {
-      try {
-        const res = await fetch(`/api/exams/${courseCode}/questions`);
-        const data = await res.json();
-        const questions = data.questions;
-        const form = document.getElementById("examForm");
-        form.innerHTML = "";
+    const questionsDiv = document.getElementById("questions");
+    data.questions.forEach((q, index) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `
+        <h3>Q${index + 1}: ${q.questionText}</h3>
+        ${['a', 'b', 'c', 'd'].map(opt =>
+          `<label><input type="radio" name="${q._id}" value="${opt}"> ${q.options[opt]}</label><br>`
+        ).join('')}
+      `;
+      questionsDiv.appendChild(div);
+    });
+  }
 
-        questions.forEach((q, index) => {
-          const div = document.createElement("div");
-          div.className = "question";
-          div.innerHTML = `
-            <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
-            ${['a', 'b', 'c', 'd'].map(opt =>
-              `<label><input type="radio" name="q${index}" value="${opt}"> ${q.options[opt]}</label><br>`
-            ).join('')}
-          `;
-          form.appendChild(div);
-        });
+  loadQuestions();
 
-        startTimer();
-      } catch (err) {
-        console.error("Failed to load questions", err);
-        alert("Error loading questions.");
+  async function submitExam() {
+    const answers = {};
+    const questions = document.querySelectorAll(".question");
+    questions.forEach((q) => {
+      const inputs = q.querySelectorAll("input[type='radio']");
+      if (inputs.length > 0) {
+        const name = inputs[0].name;
+        const selected = q.querySelector(`input[name="${name}"]:checked`);
+        answers[name] = selected ? selected.value : null;
       }
+    });
+
+    const res = await fetch(`/api/exams/${examCode}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentMatric: student.matric, answers }),
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      alert(`Exam submitted!\nScore: ${result.score}/${result.total}`);
+      window.location.href = "index.html";
+    } else {
+      alert("Error: " + result.message);
     }
+  }
+</script>
 
-    async function submitExam() {
-      clearInterval(interval);
-      const answers = {};
-      const questions = document.querySelectorAll(".question");
-      questions.forEach((q, i) => {
-        const selected = q.querySelector(`input[name="q${i}"]:checked`);
-        answers[`q${i}`] = selected ? selected.value : null;
-      });
-
-      try {
-        const res = await fetch(`/api/exams/${courseCode}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentMatric: student.matric,
-            answers: answers,
-          }),
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert("Exam submitted successfully!");
-          window.location.href = "thankyou.html"; // Redirect or show confirmation
-        } else {
-          alert(data.message || "Submission failed.");
-        }
-      } catch (err) {
-        console.error("Submit error:", err);
-        alert("Failed to submit exam.");
-      }
-    }
-
-    loadQuestions();
-  </script>
 </body>
 </html>
