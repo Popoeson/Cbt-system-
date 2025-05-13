@@ -71,7 +71,7 @@
 
     // Save the exam to the backend
     try {
-      const res = await fetch(`${BASE_URL}/api/exams/set`, {
+      const res = await fetch(`${BASE_URL}/api/exams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(examCourse),
