@@ -57,14 +57,37 @@
   </form>
 
   <script>
-    document.getElementById("setExamForm").addEventListener("submit", function (e) {
+    const BASE_URL = "https://cbt-system.onrender.com"; // your backend URL
+
+    document.getElementById("setExamForm").addEventListener("submit", async function (e) {
       e.preventDefault();
+
       const course = document.getElementById("course").value.trim();
-      const courseCode = document.getElementById("courseCode").value.trim();
+      const courseCode = document.getElementById("courseCode").value.trim().toUpperCase();
       const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
 
-      const examCourse = { course, courseCode, numQuestions };
+      if (!course || !courseCode || !numQuestions || numQuestions <= 0) {
+        alert("Please fill in all fields correctly.");
+        return;
+      }
 
+      try {
+        const res = await fetch(`${BASE_URL}/api/exams/${courseCode}`);
+        if (res.ok) {
+          const existing = await res.json();
+          alert(`The course "${existing.course}" with code "${existing.courseCode}" already exists.`);
+          return;
+        }
+      } catch (err) {
+        // If error is not a 404, something else went wrong
+        if (err?.response?.status !== 404) {
+          alert("Error checking course code. Please try again.");
+          console.error(err);
+          return;
+        }
+      }
+
+      const examCourse = { course, courseCode, numQuestions };
       localStorage.setItem("examCourse", JSON.stringify(examCourse));
       window.location.href = "add-questions.html";
     });
