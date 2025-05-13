@@ -50,9 +50,18 @@ const questionSchema = new mongoose.Schema({
   correctAnswer: String,
 });
 
+const resultSchema = new mongoose.Schema({
+  studentMatric: String,
+  courseCode: String,
+  score: Number,
+  total: Number,
+  timestamp: { type: Date, default: Date.now },
+});
+
 const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
 const Question = mongoose.model("Question", questionSchema);
+const Result = mongoose.model("Result", resultSchema);
 
 // Session tracking
 const studentSessions = new Set();
@@ -179,7 +188,7 @@ app.post("/api/exams/:courseCode/questions", async (req, res) => {
   res.json({ message: "Questions saved successfully" });
 });
 
-// Fetch All Exams (for course list interface)
+// Fetch All Exams
 app.get("/api/exams", async (req, res) => {
   try {
     const exams = await Exam.find();
@@ -187,6 +196,68 @@ app.get("/api/exams", async (req, res) => {
   } catch (err) {
     console.error("Error fetching exams:", err);
     res.status(500).json({ message: "Unable to fetch exam list." });
+  }
+});
+
+// Fetch Questions for Exam
+app.get("/api/exams/:courseCode/questions", async (req, res) => {
+  const { courseCode } = req.params;
+  try {
+    const questions = await Question.find({ courseCode });
+    res.json({ courseCode, questions });
+  } catch (err) {
+    console.error("Error fetching questions:", err);
+    res.status(500).json({ message: "Failed to load questions." });
+  }
+});
+
+// Submit Exam Answers
+app.post("/api/exams/:courseCode/submit", async (req, res) => {
+  const { courseCode } = req.params;
+  const { studentMatric, answers } = req.body;
+
+  if (!studentMatric || !answers || typeof answers !== "object") {
+    return res.status(400).json({ message: "Invalid submission data." });
+  }
+
+  try {
+    const questions = await Question.find({ courseCode });
+    let score = 0;
+    questions.forEach((q) => {
+      if (answers[q._id] && answers[q._id] === q.correctAnswer) {
+        score++;
+      }
+    });
+
+    const result = new Result({
+      studentMatric,
+      courseCode,
+      score,
+      total: questions.length,
+    });
+
+    await result.save();
+
+    res.json({
+      message: "Exam submitted successfully",
+      score,
+      total: questions.length,
+    });
+  } catch (err) {
+    console.error("Submission error:", err);
+    res.status(500).json({ message: "Failed to submit exam." });
+  }
+});
+
+// Fetch Student Results
+app.get("/api/results/:studentMatric", async (req, res) => {
+  const { studentMatric } = req.params;
+  try {
+    const results = await Result.find({ studentMatric });
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching results:", err);
+    res.status(500).json({ message: "Unable to fetch results." });
   }
 });
 
