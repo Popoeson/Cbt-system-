@@ -57,40 +57,39 @@
   </form>
 
   <script>
-    const BASE_URL = "https://cbt-system.onrender.com"; // your backend URL
+  const BASE_URL = "https://cbt-system.onrender.com";
 
-    document.getElementById("setExamForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+  document.getElementById("setExamForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-      const course = document.getElementById("course").value.trim();
-      const courseCode = document.getElementById("courseCode").value.trim().toUpperCase();
-      const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
+    const course = document.getElementById("course").value.trim();
+    const courseCode = document.getElementById("courseCode").value.trim();
+    const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
 
-      if (!course || !courseCode || !numQuestions || numQuestions <= 0) {
-        alert("Please fill in all fields correctly.");
+    const examCourse = { course, courseCode, numQuestions };
+    localStorage.setItem("examCourse", JSON.stringify(examCourse));
+
+    // Save the exam to the backend
+    try {
+      const res = await fetch(`${BASE_URL}/api/exams/set`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(examCourse),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert("Failed to save exam: " + data.message);
         return;
       }
 
-      try {
-        const res = await fetch(`${BASE_URL}/api/exams/${courseCode}`);
-        if (res.ok) {
-          const existing = await res.json();
-          alert(`The course "${existing.course}" with code "${existing.courseCode}" already exists.`);
-          return;
-        }
-      } catch (err) {
-        // If error is not a 404, something else went wrong
-        if (err?.response?.status !== 404) {
-          alert("Error checking course code. Please try again.");
-          console.error(err);
-          return;
-        }
-      }
-
-      const examCourse = { course, courseCode, numQuestions };
-      localStorage.setItem("examCourse", JSON.stringify(examCourse));
       window.location.href = "add-questions.html";
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      alert("Server error.");
+    }
+  });
+      </script>
 </body>
 </html>
