@@ -111,6 +111,39 @@
         loginResponseMsg.style.color = "red";
       }
     });
+
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const matric = document.getElementById("matric").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const response = await fetch("http://localhost:3000/api/students/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matric, password }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Save student session info
+      localStorage.setItem("studentMatric", data.student.matric);
+      localStorage.setItem("studentName", data.student.name);
+      localStorage.setItem("passport", data.student.passport);
+      localStorage.setItem("department", data.student.department);
+
+      // Redirect to available exam page
+      window.location.href = "exam-courses.html";
+    } else {
+      alert(data.message || "Login failed.");
+    }
+  } catch (err) {
+    alert("An error occurred during login.");
+    console.error(err);
+  }
+});
   </script>
 </body>
 </html>
