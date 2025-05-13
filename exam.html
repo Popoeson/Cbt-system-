@@ -11,6 +11,9 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     header {
       background-color: #2c2c2c;
@@ -39,6 +42,8 @@
     }
     .question-box {
       padding: 20px;
+      overflow-y: auto;
+      flex: 1;
     }
     .question {
       margin-bottom: 20px;
@@ -49,7 +54,7 @@
     }
     .submit-btn {
       display: block;
-      margin: 30px auto;
+      margin: 20px auto;
       padding: 10px 25px;
       font-size: 16px;
       background-color: #00bfff;
@@ -80,11 +85,12 @@
     <!-- Questions will be dynamically inserted here -->
   </div>
 
-  <button class="submit-btn" onclick="submitExam()">Submit Exam</button>
+  <button class="submit-btn" onclick="submitExam(false)">Submit Exam</button>
 
   <script>
     const student = JSON.parse(localStorage.getItem("student"));
     const examId = localStorage.getItem("selectedExamId");
+    let examSubmitted = false;
 
     if (student) {
       document.getElementById("studentName").textContent = student.name;
@@ -93,7 +99,7 @@
       document.getElementById("studentPhoto").src = `/uploads/${student.passport}`;
     }
 
-    // Countdown timer (10 minutes)
+    // Timer (10 minutes)
     let timeLeft = 10 * 60;
     const timerEl = document.getElementById("timer");
     const interval = setInterval(() => {
@@ -103,11 +109,24 @@
       if (--timeLeft < 0) {
         clearInterval(interval);
         alert("Time's up! Submitting your exam...");
-        submitExam();
+        submitExam(true);
       }
     }, 1000);
 
-    // Placeholder questions (replace with fetch from backend later)
+    // Auto-submit on tab switch or blur
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        alert("Tab switched or minimized. Your exam will be submitted.");
+        submitExam(true);
+      }
+    });
+
+    window.addEventListener("blur", () => {
+      alert("Browser unfocused. Your exam will be submitted.");
+      submitExam(true);
+    });
+
+    // Sample questions (replace with dynamic fetch if needed)
     const questions = [
       {
         question: "What is the capital of Nigeria?",
@@ -134,7 +153,16 @@
       container.appendChild(div);
     });
 
-    function submitExam() {
+    function submitExam(auto = false) {
+      if (examSubmitted) return;
+
+      if (!auto) {
+        const confirmSubmit = confirm("Are you sure you want to submit your exam?");
+        if (!confirmSubmit) return;
+      }
+
+      examSubmitted = true;
+
       const answers = [];
       document.querySelectorAll(".question").forEach((qDiv, index) => {
         const selected = qDiv.querySelector(`input[name="q${index}"]:checked`);
@@ -157,8 +185,7 @@
         if (!res.ok) throw new Error("Failed to submit exam.");
         return res.json();
       })
-      .then(data => {
-        alert("Exam submitted successfully!");
+      .then(() => {
         window.location.href = "submission-success.html";
       })
       .catch(err => {
