@@ -168,7 +168,7 @@ app.post("/api/exams", async (req, res) => {
   res.json({ message: "Exam created", exam });
 });
 
-// Store Exam Questions
+// Store Exam Questions & Auto-create Exam Entry
 app.post("/api/exams/:courseCode/questions", async (req, res) => {
   const { courseCode } = req.params;
   const { questions } = req.body;
@@ -185,6 +185,19 @@ app.post("/api/exams/:courseCode/questions", async (req, res) => {
   }));
 
   await Question.insertMany(formatted);
+
+  let exam = await Exam.findOne({ courseCode });
+
+  if (!exam) {
+    const courseTitle = questions[0]?.course || "Untitled Course";
+    const newExam = new Exam({
+      course: courseTitle,
+      courseCode,
+      numQuestions: formatted.length
+    });
+    await newExam.save();
+  }
+
   res.json({ message: "Questions saved successfully" });
 });
 
