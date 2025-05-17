@@ -23,6 +23,17 @@
       color: #ff6666;
       margin-bottom: 20px;
     }
+    button {
+      padding: 10px 20px;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #666;
+    }
   </style>
 </head>
 <body>
@@ -37,9 +48,10 @@
     let timer;
     const durationMinutes = 30;
 
-    // Auto-submit on tab switch
+    // Auto-submit when tab is hidden
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) {
+        console.warn("Tab hidden — auto-submitting exam.");
         submitExam();
       }
     });
@@ -61,8 +73,16 @@
 
     function loadExam(courseCode) {
       fetch(`/api/exams/${courseCode}/questions`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch exam questions");
+          return res.json();
+        })
         .then(data => {
+          if (!data.questions || data.questions.length === 0) {
+            document.getElementById("questionsContainer").innerHTML = "<p>No questions available for this course.</p>";
+            return;
+          }
+
           examData = data;
           const container = document.getElementById("questionsContainer");
           container.innerHTML = "";
@@ -77,7 +97,18 @@
             `;
             container.appendChild(div);
           });
+
+          const submitBtn = document.createElement("button");
+          submitBtn.textContent = "Submit Exam";
+          submitBtn.style.marginTop = "20px";
+          submitBtn.onclick = submitExam;
+          container.appendChild(submitBtn);
+
           startTimer(durationMinutes * 60);
+        })
+        .catch(err => {
+          console.error("Error loading exam:", err);
+          document.getElementById("questionsContainer").innerHTML = `<p style="color:red;">Error loading questions.</p>`;
         });
     }
 
@@ -86,8 +117,13 @@
     }
 
     function submitExam() {
-      const studentData = JSON.parse(localStorage.getItem("student"));
-      if (!studentData || !examData) return;
+      const studentData = JSON.parse(localStorage.getItem("studentData"));
+      if (!studentData || !examData) {
+        alert("Missing student or exam data.");
+        return;
+      }
+
+      clearInterval(timer); // Stop timer if still running
 
       fetch(`/api/exams/${examData.courseCode}/submit`, {
         method: "POST",
@@ -99,8 +135,8 @@
       })
         .then(res => res.json())
         .then(data => {
-          alert("Exam submitted!");
-          window.location.href = "exam-courses.html";
+          alert("Exam submitted successfully.");
+          window.location.href = "select-exam.html";
         })
         .catch(err => {
           console.error("Submission error:", err);
@@ -109,10 +145,10 @@
     }
 
     window.onload = () => {
-      const studentData = JSON.parse(localStorage.getItem("student"));
-      const examDataFromStorage = JSON.parse(localStorage.getItem("selectedCourse"));
+      const studentData = JSON.parse(localStorage.getItem("studentData"));
+      const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
 
-      if (!studentData || !examDataFromStorage) {
+      if (!studentData || !selectedExam) {
         alert("Missing student or exam data. Please login and select an exam.");
         window.location.href = "student-login.html";
         return;
@@ -125,7 +161,7 @@
         <p><strong>Department:</strong> ${studentData.department}</p>
       `;
 
-      loadExam(examDataFromStorage.code);
+      loadExam(selectedExam.courseCode);
     };
   </script>
 </body>
