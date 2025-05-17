@@ -219,6 +219,22 @@ app.get("/api/exams", async (req, res) => {
   }
 });
 
+// Fetch All Courses (used in exam-courses.html)
+app.get("/api/questions/courses", async (req, res) => {
+  try {
+    const exams = await Exam.find({}, "course courseCode");
+    const courses = exams.map((exam) => ({
+      title: exam.course,
+      code: exam.courseCode
+    }));
+
+    res.json({ courses });
+  } catch (error) {
+    console.error("Failed to fetch courses:", error);
+    res.status(500).json({ message: "Failed to fetch courses." });
+  }
+});
+
 // Fetch Questions for Exam
 app.get("/api/exams/:courseCode/questions", async (req, res) => {
   const { courseCode } = req.params;
