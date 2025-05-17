@@ -99,11 +99,14 @@
         const data = await response.json();
 
         if (response.ok) {
-          // Save student session info
-          localStorage.setItem("studentMatric", data.student.matric);
-          localStorage.setItem("studentName", data.student.name);
-          localStorage.setItem("passport", data.student.passport);
-          localStorage.setItem("department", data.student.department);
+          // Store student info as a single object
+          const studentData = {
+            name: data.student.name,
+            matric: data.student.matric,
+            passport: data.student.passport,
+            department: data.student.department
+          };
+          localStorage.setItem("student", JSON.stringify(studentData));
 
           // Redirect to available exam page
           window.location.href = "exam-courses.html";
