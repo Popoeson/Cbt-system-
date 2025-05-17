@@ -37,7 +37,7 @@
     let timer;
     const durationMinutes = 30;
 
-    // Auto-submit on tab switch (no prompt)
+    // Auto-submit on tab switch
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) {
         submitExam();
@@ -86,7 +86,7 @@
     }
 
     function submitExam() {
-      const studentData = JSON.parse(localStorage.getItem("studentData"));
+      const studentData = JSON.parse(localStorage.getItem("student"));
       if (!studentData || !examData) return;
 
       fetch(`/api/exams/${examData.courseCode}/submit`, {
@@ -100,7 +100,7 @@
         .then(res => res.json())
         .then(data => {
           alert("Exam submitted!");
-          window.location.href = "select-exam.html";
+          window.location.href = "exam-courses.html";
         })
         .catch(err => {
           console.error("Submission error:", err);
@@ -109,8 +109,8 @@
     }
 
     window.onload = () => {
-      const studentData = JSON.parse(localStorage.getItem("studentData"));
-      const examDataFromStorage = JSON.parse(localStorage.getItem("selectedExam"));
+      const studentData = JSON.parse(localStorage.getItem("student"));
+      const examDataFromStorage = JSON.parse(localStorage.getItem("selectedCourse"));
 
       if (!studentData || !examDataFromStorage) {
         alert("Missing student or exam data. Please login and select an exam.");
@@ -125,7 +125,7 @@
         <p><strong>Department:</strong> ${studentData.department}</p>
       `;
 
-      loadExam(examDataFromStorage.courseCode);
+      loadExam(examDataFromStorage.code);
     };
   </script>
 </body>
