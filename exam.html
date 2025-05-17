@@ -1,197 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Exam</title>
   <style>
     body {
-      background-color: #1c1c1c;
+      background-color: #1e1e1e;
       color: #f0f0f0;
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    #studentInfo img {
+      border-radius: 10px;
+    }
+    .question {
       margin-bottom: 20px;
-    }
-    .student-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    .student-info img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #00bfff;
-    }
-    h1 {
-      font-size: 20px;
+      padding: 15px;
+      background-color: #2c2c2c;
+      border-radius: 10px;
     }
     #timer {
       font-size: 18px;
-      color: #ff4444;
-    }
-    .question {
-      background-color: #2c2c2c;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-    .question p {
-      margin-bottom: 10px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #00bfff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0099cc;
+      color: #ff6666;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="student-info">
-      <img id="studentPhoto" src="" alt="Passport">
-      <div>
-        <div id="studentName"></div>
-        <div id="studentMatric"></div>
-        <div id="studentDept"></div>
-      </div>
-    </div>
-    <div id="timer">Time left: --:--</div>
-  </header>
-
-  <h1>Exam Questions</h1>
-  <form id="examForm"></form>
-
-  <button type="submit" form="examForm">Submit Answers</button>
+  <h2>Online Exam</h2>
+  <div id="timer"></div>
+  <div id="studentInfo"></div>
+  <div id="questionsContainer"></div>
 
   <script>
-  const BASE_URL = "https://cbt-system.onrender.com";
-  const urlParams = new URLSearchParams(window.location.search);
-  const courseCode = urlParams.get("courseCode");
+    let examData = null;
+    let selectedAnswers = {};
+    let timer;
+    const durationMinutes = 30;
 
-  if (!courseCode) {
-    alert("No course code specified. Please return to select an exam.");
-    window.location.href = "exam-courses.html"; // Replace with your actual exam list page
-  }
-
-  const student = JSON.parse(localStorage.getItem("student"));
-
-  if (!student) {
-    alert("No student data found. Please login.");
-    window.location.href = "student-login.html";
-  }
-
-  // Show student info
-  document.getElementById("studentName").textContent = student.name;
-  document.getElementById("studentMatric").textContent = student.matric;
-  document.getElementById("studentDept").textContent = student.department;
-  document.getElementById("studentPhoto").src = `${BASE_URL}/uploads/${student.passport}`;
-
-  const form = document.getElementById("examForm");
-
-  // Optional: Display course code in title
-  const title = document.querySelector("h1");
-  title.innerHTML = `Exam Questions for <span style="color:#00bfff;">${courseCode}</span>`;
-
-  // Fetch exam questions
-  fetch(`${BASE_URL}/api/exams/${courseCode}/questions`)
-    .then(res => res.json())
-    .then(data => {
-      const questions = data.questions;
-      questions.forEach((q, index) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "question";
-        wrapper.innerHTML = `
-          <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
-          ${['a', 'b', 'c', 'd'].map(opt => `
-            <label>
-              <input type="radio" name="${q._id}" value="${opt}" required>
-              ${opt.toUpperCase()}. ${q.options[opt]}
-            </label>
-          `).join('')}
-        `;
-        form.appendChild(wrapper);
-      });
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Failed to load exam questions.");
+    // Auto-submit on tab switch (no prompt)
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        submitExam();
+      }
     });
 
-  // Handle form submission
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const answers = {};
+    function startTimer(duration) {
+      let timeLeft = duration;
+      timer = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById("timer").textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        timeLeft--;
 
-    for (let [key, value] of formData.entries()) {
-      answers[key] = value;
+        if (timeLeft < 0) {
+          clearInterval(timer);
+          submitExam();
+        }
+      }, 1000);
     }
 
-    fetch(`${BASE_URL}/api/exams/${courseCode}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        studentMatric: student.matric,
-        answers,
-        courseCode  // <- Added to make sure courseCode is saved in result
+    function loadExam(courseCode) {
+      fetch(`/api/exams/${courseCode}/questions`)
+        .then(res => res.json())
+        .then(data => {
+          examData = data;
+          const container = document.getElementById("questionsContainer");
+          container.innerHTML = "";
+          data.questions.forEach((q, index) => {
+            const div = document.createElement("div");
+            div.className = "question";
+            div.innerHTML = `
+              <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
+              ${["a", "b", "c", "d"].map(opt => `
+                <label><input type="radio" name="q${q._id}" value="${opt}" onchange="selectAnswer('${q._id}', '${opt}')"> ${opt}) ${q.options[opt]}</label><br>
+              `).join("")}
+            `;
+            container.appendChild(div);
+          });
+          startTimer(durationMinutes * 60);
+        });
+    }
+
+    function selectAnswer(questionId, option) {
+      selectedAnswers[questionId] = option;
+    }
+
+    function submitExam() {
+      const studentData = JSON.parse(localStorage.getItem("studentData"));
+      if (!studentData || !examData) return;
+
+      fetch(`/api/exams/${examData.courseCode}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentMatric: studentData.matric,
+          answers: selectedAnswers
+        })
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("Exam submitted successfully!");
-      window.location.href = "results.html";
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Failed to submit exam.");
-    });
-  });
-
-  // Timer logic (30 minutes)
-  let timeLeft = 30 * 60;
-  const timerDisplay = document.getElementById("timer");
-
-  function updateTimer() {
-    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const seconds = (timeLeft % 60).toString().padStart(2, '0');
-    timerDisplay.textContent = `Time left: ${minutes}:${seconds}`;
-    timeLeft--;
-
-    if (timeLeft < 0) {
-      clearInterval(timerInterval);
-      alert("Time's up! Submitting exam...");
-      form.requestSubmit();
+        .then(res => res.json())
+        .then(data => {
+          alert("Exam submitted!");
+          window.location.href = "select-exam.html";
+        })
+        .catch(err => {
+          console.error("Submission error:", err);
+          alert("Failed to submit exam.");
+        });
     }
-  }
 
-  const timerInterval = setInterval(updateTimer, 1000);
-  updateTimer();
+    window.onload = () => {
+      const studentData = JSON.parse(localStorage.getItem("studentData"));
+      const examDataFromStorage = JSON.parse(localStorage.getItem("selectedExam"));
 
-  // Auto-submit on tab switch
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      alert("Tab switch detected. Submitting exam...");
-      form.requestSubmit();
-    }
-  });
+      if (!studentData || !examDataFromStorage) {
+        alert("Missing student or exam data. Please login and select an exam.");
+        window.location.href = "student-login.html";
+        return;
+      }
+
+      document.getElementById("studentInfo").innerHTML = `
+        <img src="/uploads/${studentData.passport}" alt="Passport" height="80">
+        <p><strong>Name:</strong> ${studentData.name}</p>
+        <p><strong>Matric:</strong> ${studentData.matric}</p>
+        <p><strong>Department:</strong> ${studentData.department}</p>
+      `;
+
+      loadExam(examDataFromStorage.courseCode);
+    };
   </script>
 </body>
 </html>
