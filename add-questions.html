@@ -47,7 +47,7 @@
   <button type="button" onclick="submitQuestions()">Submit All Questions</button>
 
   <script>
-    const BASE_URL = "https://cbt-system.onrender.com"; // Your backend URL
+    const BASE_URL = "https://cbt-system.onrender.com";
 
     const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
     const questionsForm = document.getElementById("questionsForm");
@@ -107,7 +107,7 @@
       }
 
       try {
-        const response = await fetch(`${BASE_URL}/api/exams/${exam.courseCode}/questions`, {
+        const response = await fetch(`${BASE_URL}/api/questions/${exam.courseCode}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
