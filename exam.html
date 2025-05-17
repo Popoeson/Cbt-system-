@@ -82,105 +82,116 @@
   <button type="submit" form="examForm">Submit Answers</button>
 
   <script>
-    const BASE_URL = "https://cbt-system.onrender.com";
-    const urlParams = new URLSearchParams(window.location.search);
-    const courseCode = urlParams.get("courseCode");
-    const student = JSON.parse(localStorage.getItem("student"));
+  const BASE_URL = "https://cbt-system.onrender.com";
+  const urlParams = new URLSearchParams(window.location.search);
+  const courseCode = urlParams.get("courseCode");
 
-    if (!student) {
-      alert("No student data found. Please login.");
-      window.location.href = "login.html";
-    }
+  if (!courseCode) {
+    alert("No course code specified. Please return to select an exam.");
+    window.location.href = "exam-courses.html"; // Replace with your actual exam list page
+  }
 
-    // Show student info
-    document.getElementById("studentName").textContent = student.name;
-    document.getElementById("studentMatric").textContent = student.matric;
-    document.getElementById("studentDept").textContent = student.department;
-    document.getElementById("studentPhoto").src = `${BASE_URL}/uploads/${student.passport}`;
+  const student = JSON.parse(localStorage.getItem("student"));
 
-    const form = document.getElementById("examForm");
+  if (!student) {
+    alert("No student data found. Please login.");
+    window.location.href = "student-login.html";
+  }
 
-    // Fetch exam questions
-    fetch(`${BASE_URL}/api/exams/${courseCode}/questions`)
-      .then(res => res.json())
-      .then(data => {
-        const questions = data.questions;
-        questions.forEach((q, index) => {
-          const wrapper = document.createElement("div");
-          wrapper.className = "question";
-          wrapper.innerHTML = `
-            <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
-            ${['a', 'b', 'c', 'd'].map(opt => `
-              <label>
-                <input type="radio" name="${q._id}" value="${opt}" required>
-                ${opt.toUpperCase()}. ${q.options[opt]}
-              </label>
-            `).join('')}
-          `;
-          form.appendChild(wrapper);
-        });
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Failed to load exam questions.");
+  // Show student info
+  document.getElementById("studentName").textContent = student.name;
+  document.getElementById("studentMatric").textContent = student.matric;
+  document.getElementById("studentDept").textContent = student.department;
+  document.getElementById("studentPhoto").src = `${BASE_URL}/uploads/${student.passport}`;
+
+  const form = document.getElementById("examForm");
+
+  // Optional: Display course code in title
+  const title = document.querySelector("h1");
+  title.innerHTML = `Exam Questions for <span style="color:#00bfff;">${courseCode}</span>`;
+
+  // Fetch exam questions
+  fetch(`${BASE_URL}/api/exams/${courseCode}/questions`)
+    .then(res => res.json())
+    .then(data => {
+      const questions = data.questions;
+      questions.forEach((q, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "question";
+        wrapper.innerHTML = `
+          <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
+          ${['a', 'b', 'c', 'd'].map(opt => `
+            <label>
+              <input type="radio" name="${q._id}" value="${opt}" required>
+              ${opt.toUpperCase()}. ${q.options[opt]}
+            </label>
+          `).join('')}
+        `;
+        form.appendChild(wrapper);
       });
-
-    // Handle form submission
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const answers = {};
-
-      for (let [key, value] of formData.entries()) {
-        answers[key] = value;
-      }
-
-      fetch(`${BASE_URL}/api/exams/${courseCode}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentMatric: student.matric,
-          answers
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert("Exam submitted successfully!");
-        window.location.href = "results.html";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Failed to submit exam.");
-      });
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Failed to load exam questions.");
     });
 
-    // Timer logic (e.g., 30 minutes)
-    let timeLeft = 30 * 60; // 30 minutes in seconds
-    const timerDisplay = document.getElementById("timer");
+  // Handle form submission
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const answers = {};
 
-    function updateTimer() {
-      const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-      const seconds = (timeLeft % 60).toString().padStart(2, '0');
-      timerDisplay.textContent = `Time left: ${minutes}:${seconds}`;
-      timeLeft--;
-
-      if (timeLeft < 0) {
-        clearInterval(timerInterval);
-        alert("Time's up! Submitting exam...");
-        form.requestSubmit();
-      }
+    for (let [key, value] of formData.entries()) {
+      answers[key] = value;
     }
 
-    const timerInterval = setInterval(updateTimer, 1000);
-    updateTimer();
-
-    // Auto-submit on tab switch or visibility loss
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        alert("Tab switch detected. Submitting exam...");
-        form.requestSubmit();
-      }
+    fetch(`${BASE_URL}/api/exams/${courseCode}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentMatric: student.matric,
+        answers,
+        courseCode  // <- Added to make sure courseCode is saved in result
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert("Exam submitted successfully!");
+      window.location.href = "results.html";
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Failed to submit exam.");
     });
+  });
+
+  // Timer logic (30 minutes)
+  let timeLeft = 30 * 60;
+  const timerDisplay = document.getElementById("timer");
+
+  function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const seconds = (timeLeft % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `Time left: ${minutes}:${seconds}`;
+    timeLeft--;
+
+    if (timeLeft < 0) {
+      clearInterval(timerInterval);
+      alert("Time's up! Submitting exam...");
+      form.requestSubmit();
+    }
+  }
+
+  const timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+
+  // Auto-submit on tab switch
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      alert("Tab switch detected. Submitting exam...");
+      form.requestSubmit();
+    }
+  });
   </script>
 </body>
 </html>
