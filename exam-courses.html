@@ -36,7 +36,7 @@
     const student = JSON.parse(localStorage.getItem("student"));
     if (!student) {
       alert("Please login first.");
-      window.location.href = "student-login.html"; // Ensure this matches your login page filename
+      window.location.href = "student-login.html";
     }
 
     async function fetchExams() {
@@ -52,12 +52,12 @@
           div.className = "exam-item";
           div.textContent = `${course.title} (${course.code})`;
           div.addEventListener("click", () => {
-            // Store course code and title for the exam page
-            localStorage.setItem("selectedCourse", JSON.stringify({
-              title: course.title,
-              code: course.code
+            // Save exam data to localStorage as "selectedExam"
+            localStorage.setItem("selectedExam", JSON.stringify({
+              courseTitle: course.title,
+              courseCode: course.code
             }));
-            window.location.href = "exam.html"; // Go to exam interface
+            window.location.href = "exam.html";
           });
           examList.appendChild(div);
         });
