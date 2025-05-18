@@ -1,121 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBT Results</title>
   <style>
     body {
-      background: #111;
-      color: #fff;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
       font-family: Arial, sans-serif;
       padding: 20px;
     }
     h1 {
       text-align: center;
+      color: #fff;
     }
-    #search-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #search-input {
-      padding: 8px;
-      width: 250px;
-      border: none;
-      border-radius: 5px;
-    }
-    #download-btn {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #download-btn:hover {
-      background: #45a049;
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      background-color: #222;
+      background: #2a2a2a;
     }
     th, td {
       border: 1px solid #444;
-      padding: 8px;
-      text-align: center;
+      padding: 10px;
+      text-align: left;
     }
     th {
-      background-color: #333;
+      background: #333;
+    }
+    tr:hover {
+      background: #3a3a3a;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>CBT Exam Results</h1>
-
-  <div id="search-container">
-    <input type="text" id="search-input" placeholder="Search by name, matric, department, or course..." />
-  </div>
-
-  <button id="download-btn">Download as Excel/CSV</button>
-
-  <table id="results-table">
+  <h1>CBT Results</h1>
+  <input type="text" id="searchInput" placeholder="Search by Matric or Name" />
+  <table>
     <thead>
       <tr>
-        <th>Matric</th>
         <th>Name</th>
+        <th>Matric</th>
         <th>Department</th>
         <th>Course Code</th>
         <th>Score</th>
-        <th>Total</th>
-        <th>Percentage</th>
-        <th>Date</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="resultsTableBody"></tbody>
   </table>
+  <button onclick="downloadResults()">Download CSV</button>
 
   <script>
-    const backendURL = "https://cbt-system.onrender.com";
-    let allResults = [];
+    const backendUrl = "https://cbt-system.onrender.com"; // Change if running locally
 
-    function displayResults(data) {
-      const tbody = document.querySelector("#results-table tbody");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        row.forEach(col => {
-          const td = document.createElement("td");
-          td.textContent = col;
-          tr.appendChild(td);
+    async function fetchResults() {
+      try {
+        const res = await fetch(`${backendUrl}/api/results/download`);
+        const blob = await res.blob();
+        const text = await blob.text();
+        const lines = text.trim().split('\n');
+        const headers = lines.shift().split(',');
+
+        const resultsTable = document.getElementById("resultsTableBody");
+        resultsTable.innerHTML = "";
+
+        lines.forEach(line => {
+          const values = line.split(',');
+          const row = document.createElement("tr");
+          values.forEach(val => {
+            const cell = document.createElement("td");
+            cell.textContent = val;
+            row.appendChild(cell);
+          });
+          resultsTable.appendChild(row);
         });
-        tbody.appendChild(tr);
-      });
+      } catch (err) {
+        console.error("Failed to load results", err);
+      }
     }
 
-    fetch(`${backendURL}/api/results/download`)
-      .then(res => res.text())
-      .then(csv => {
-        const rows = csv.trim().split("\n").slice(1); // skip header
-        allResults = rows.map(r => r.split(","));
-        displayResults(allResults);
-      })
-      .catch(err => {
-        console.error("Failed to fetch results:", err);
-        alert("Failed to load results. Please try again later.");
+    function downloadResults() {
+      window.location.href = `${backendUrl}/api/results/download`;
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#resultsTableBody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
       });
-
-    document.getElementById("download-btn").addEventListener("click", () => {
-      window.location.href = `${backendURL}/api/results/download`;
     });
 
-    document.getElementById("search-input").addEventListener("input", e => {
-      const searchTerm = e.target.value.toLowerCase();
-      const filtered = allResults.filter(row =>
-        row.some(col => col.toLowerCase().includes(searchTerm))
-      );
-      displayResults(filtered);
-    });
+    fetchResults();
   </script>
 </body>
 </html>
