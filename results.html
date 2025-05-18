@@ -76,6 +76,7 @@
   </table>
 
   <script>
+    const backendURL = "https://cbt-system.onrender.com";
     let allResults = [];
 
     function displayResults(data) {
@@ -92,16 +93,20 @@
       });
     }
 
-    fetch("/api/results/download")
+    fetch(`${backendURL}/api/results/download`)
       .then(res => res.text())
       .then(csv => {
-        const rows = csv.trim().split("\n").slice(1); // Skip header
+        const rows = csv.trim().split("\n").slice(1); // skip header
         allResults = rows.map(r => r.split(","));
         displayResults(allResults);
+      })
+      .catch(err => {
+        console.error("Failed to fetch results:", err);
+        alert("Failed to load results. Please try again later.");
       });
 
     document.getElementById("download-btn").addEventListener("click", () => {
-      window.location.href = "/api/results/download";
+      window.location.href = `${backendURL}/api/results/download`;
     });
 
     document.getElementById("search-input").addEventListener("input", e => {
