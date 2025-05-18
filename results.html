@@ -12,6 +12,28 @@
     h1 {
       text-align: center;
     }
+    #search-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #search-input {
+      padding: 8px;
+      width: 250px;
+      border: none;
+      border-radius: 5px;
+    }
+    #download-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #download-btn:hover {
+      background: #45a049;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -26,23 +48,17 @@
     th {
       background-color: #333;
     }
-    #download-btn {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #download-btn:hover {
-      background: #45a049;
-    }
   </style>
 </head>
 <body>
   <h1>CBT Exam Results</h1>
+
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search by name, matric, department, or course..." />
+  </div>
+
   <button id="download-btn">Download as Excel/CSV</button>
+
   <table id="results-table">
     <thead>
       <tr>
@@ -60,25 +76,40 @@
   </table>
 
   <script>
+    let allResults = [];
+
+    function displayResults(data) {
+      const tbody = document.querySelector("#results-table tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(col => {
+          const td = document.createElement("td");
+          td.textContent = col;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
     fetch("/api/results/download")
       .then(res => res.text())
       .then(csv => {
-        const rows = csv.trim().split("\n").slice(1); // skip header row
-        const tbody = document.querySelector("#results-table tbody");
-        rows.forEach(row => {
-          const cols = row.split(",");
-          const tr = document.createElement("tr");
-          cols.forEach(col => {
-            const td = document.createElement("td");
-            td.textContent = col;
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
+        const rows = csv.trim().split("\n").slice(1); // Skip header
+        allResults = rows.map(r => r.split(","));
+        displayResults(allResults);
       });
 
     document.getElementById("download-btn").addEventListener("click", () => {
       window.location.href = "/api/results/download";
+    });
+
+    document.getElementById("search-input").addEventListener("input", e => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = allResults.filter(row =>
+        row.some(col => col.toLowerCase().includes(searchTerm))
+      );
+      displayResults(filtered);
     });
   </script>
 </body>
