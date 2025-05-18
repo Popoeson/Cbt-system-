@@ -103,7 +103,13 @@
           throw new Error(error.message || "Failed to load questions.");
         }
 
-        const questions = await response.json();
+        const data = await response.json();
+        const questions = data.questions;
+
+        if (!Array.isArray(questions)) {
+          throw new Error("Invalid response format: questions should be an array.");
+        }
+
         const form = document.getElementById("examForm");
         questions.forEach((q, i) => {
           const div = document.createElement("div");
@@ -159,8 +165,7 @@
           alert("Exam submitted successfully!");
           window.location.href = "thankyou.html";
         } else {
-          const err = await response.json();
-          alert("Submission failed: " + (err.message || "Unknown error"));
+          alert("Submission failed.");
         }
       } catch (err) {
         alert("An error occurred during submission.");
