@@ -105,10 +105,19 @@
     let questions = [];
 
     async function fetchQuestions() {
-      const res = await fetch(`/api/exams/${courseCode}/questions`);
-      const data = await res.json();
-      questions = data.questions;
-      renderQuestions();
+      try {
+        const res = await fetch(`https://cbt-system.onrender.com/api/questions/${courseCode}`);
+        const data = await res.json();
+        questions = data.questions;
+        if (!questions || questions.length === 0) {
+          document.getElementById("exam-form").innerHTML = "<p>No questions available for this course.</p>";
+          return;
+        }
+        renderQuestions();
+      } catch (err) {
+        console.error("Failed to load questions:", err);
+        document.getElementById("exam-form").innerHTML = "<p>Error loading questions. Try again later.</p>";
+      }
     }
 
     function renderQuestions() {
@@ -154,7 +163,7 @@
 
     function submitExam() {
       const answers = collectAnswers();
-      fetch(`/api/exams/${courseCode}/submit`, {
+      fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -204,4 +213,4 @@
   </script>
 
 </body>
-  </html>
+</html>
