@@ -1,18 +1,22 @@
 const express = require("express");
-const multer = require("multer");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const multer = require("multer");
 const fs = require("fs");
+const { Parser } = require("json2csv");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
+
+// Multer for passport uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+const upload = multer({ storage });
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?retryWrites=true&w=majority&appName=Cbt", {
@@ -21,10 +25,10 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
 }).then(() => console.log("Connected to MongoDB"))
   .catch(err => console.error("MongoDB connection failed:", err));
 
-// Mongoose Schemas
+// Schemas
 const studentSchema = new mongoose.Schema({
   name: String,
-  matric: String,
+  matric: { type: String, unique: true },
   department: String,
   phone: String,
   email: String,
@@ -35,7 +39,13 @@ const studentSchema = new mongoose.Schema({
 const examSchema = new mongoose.Schema({
   course: String,
   courseCode: String,
-  numQuestions: Number,
+  questions: [
+    {
+      question: String,
+      options: [String],
+      answer: String,
+    },
+  ],
 });
 
 const questionSchema = new mongoose.Schema({
@@ -59,10 +69,12 @@ const resultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+// Models
 const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
 const Question = mongoose.model("Question", questionSchema);
 const Result = mongoose.model("Result", resultSchema);
+
 
 // Session tracking
 const studentSessions = new Set();
@@ -123,17 +135,16 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
   res.json({ message: "Student registered successfully.", student });
 });
 
-// Student Login
+// Login
 app.post("/api/students/login", async (req, res) => {
-  const { matric, password } = req.body;
-  const student = await Student.findOne({ matric, password });
-
-  if (!student) {
-    return res.status(401).json({ message: "Invalid matric number or password." });
+  try {
+    const { matric, password } = req.body;
+    const student = await Student.findOne({ matric, password });
+    if (!student) return res.status(401).json({ message: "Invalid login" });
+    res.json({ message: "Login successful", student });
+  } catch (err) {
+    res.status(500).json({ message: "Login error" });
   }
-
-  studentSessions.add(matric);
-  res.json({ message: "Login successful", student });
 });
 
 // Dashboard
@@ -246,58 +257,118 @@ app.get("/api/exams/:courseCode/questions", async (req, res) => {
     res.status(500).json({ message: "Failed to load questions." });
   }
 });
-
-// Submit Exam Answers
-app.post("/api/exams/:courseCode/submit", async (req, res) => {
-  const { courseCode } = req.params;
-  const { studentMatric, answers } = req.body;
-
-  if (!studentMatric || !answers || typeof answers !== "object") {
-    return res.status(400).json({ message: "Invalid submission data." });
-  }
-
+// Submit Exam – Prevent Duplicates
+app.post("/api/submissions", async (req, res) => {
   try {
-    const questions = await Question.find({ courseCode });
+    const { studentMatric, courseCode, answers } = req.body;
+
+    const existing = await Result.findOne({ studentMatric, courseCode });
+    if (existing) return res.status(400).json({ message: "Already submitted." });
+
+    const exam = await Exam.findOne({ courseCode });
+    if (!exam) return res.status(404).json({ message: "Exam not found" });
+
     let score = 0;
-    questions.forEach((q) => {
-      if (answers[q._id] && answers[q._id] === q.correctAnswer) {
-        score++;
-      }
-    });
+    for (let i = 0; i < exam.questions.length; i++) {
+      if (answers[i] && answers[i] === exam.questions[i].answer) score++;
+    }
 
-    const result = new Result({
-      studentMatric,
-      courseCode,
-      score,
-      total: questions.length,
-    });
-
+    const result = new Result({ studentMatric, courseCode, score, total: exam.questions.length });
     await result.save();
 
-    res.json({
-      message: "Exam submitted successfully",
-      score,
-      total: questions.length,
-    });
+    res.json({ message: "Submission successful" });
   } catch (err) {
-    console.error("Submission error:", err);
-    res.status(500).json({ message: "Failed to submit exam." });
+    console.error("Submit error:", err);
+    res.status(500).json({ message: "Submit error" });
   }
 });
 
-// Fetch Student Results
-app.get("/api/results/:studentMatric", async (req, res) => {
-  const { studentMatric } = req.params;
+// Fetch Results (Search)
+app.get("/api/results", async (req, res) => {
   try {
-    const results = await Result.find({ studentMatric });
-    res.json(results);
+    const { matric, name, courseCode } = req.query;
+
+    const studentFilter = {};
+    if (matric) studentFilter.matric = new RegExp(matric, "i");
+    if (name) studentFilter.name = new RegExp(name, "i");
+
+    const students = await Student.find(studentFilter);
+    const exams = await Exam.find({}, "course courseCode");
+    const results = await Result.find();
+
+    const response = [];
+
+    students.forEach(student => {
+      results
+        .filter(r => r.studentMatric === student.matric && (!courseCode || r.courseCode === courseCode))
+        .forEach(r => {
+          const exam = exams.find(e => e.courseCode === r.courseCode);
+          response.push({
+            name: student.name,
+            matric: student.matric,
+            department: student.department,
+            course: exam?.course || "Unknown",
+            courseCode: r.courseCode,
+            score: r.score,
+            total: r.total,
+            timestamp: r.timestamp,
+            passport: student.passport
+              ? `${req.protocol}://${req.get("host")}/uploads/${student.passport}`
+              : null,
+          });
+        });
+    });
+
+    res.json({ results: response });
   } catch (err) {
-    console.error("Error fetching results:", err);
-    res.status(500).json({ message: "Unable to fetch results." });
+    res.status(500).json({ message: "Failed to fetch results" });
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`CBT server running at http://localhost:${PORT}`);
+// Download Results as CSV
+app.get("/api/results/download", async (req, res) => {
+  try {
+    const { matric, name, courseCode } = req.query;
+
+    const studentFilter = {};
+    if (matric) studentFilter.matric = new RegExp(matric, "i");
+    if (name) studentFilter.name = new RegExp(name, "i");
+
+    const students = await Student.find(studentFilter);
+    const exams = await Exam.find({}, "course courseCode");
+    const results = await Result.find();
+
+    const data = [];
+
+    students.forEach(student => {
+      results
+        .filter(r => r.studentMatric === student.matric && (!courseCode || r.courseCode === courseCode))
+        .forEach(r => {
+          const exam = exams.find(e => e.courseCode === r.courseCode);
+          data.push({
+            Name: student.name,
+            Matric: student.matric,
+            Department: student.department,
+            Course: exam?.course || "Unknown",
+            CourseCode: r.courseCode,
+            Score: r.score,
+            Total: r.total,
+            Timestamp: r.timestamp.toLocaleString(),
+          });
+        });
+    });
+
+    const parser = new Parser();
+    const csv = parser.parse(data);
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=results.csv");
+    res.status(200).send(csv);
+  } catch (err) {
+    res.status(500).json({ message: "CSV generation failed" });
+  }
 });
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`CBT backend running on port ${PORT}`));
