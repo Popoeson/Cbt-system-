@@ -55,7 +55,7 @@
 
     if (!exam.course || !exam.courseCode || !exam.numQuestions) {
       alert("Missing exam course details.");
-      window.location.href = "set-exam.html";
+      window.location.href = "exam-settings.html";
     }
 
     courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
@@ -107,7 +107,7 @@
       }
 
       try {
-        const response = await fetch(`${BASE_URL}/api/questions/${exam.courseCode}`, {
+        const response = await fetch(`${BASE_URL}/api/exams/${exam.courseCode}/questions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -124,7 +124,6 @@
           alert("Failed to submit questions: " + result.message);
         }
       } catch (err) {
-        console.error("Submission error:", err);
         alert("An error occurred while submitting the questions.");
       }
     }
