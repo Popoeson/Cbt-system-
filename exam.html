@@ -96,7 +96,13 @@
     // Fetch questions
     async function loadQuestions() {
       try {
-        const response = await fetch(`https://cbt-system.onrender.com/api/questions/${selectedExam.courseCode}`);
+        const response = await fetch(`https://cbt-system.onrender.com/api/exams/${selectedExam.courseCode}/questions`);
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to load questions.");
+        }
+
         const questions = await response.json();
         const form = document.getElementById("examForm");
         questions.forEach((q, i) => {
@@ -114,7 +120,7 @@
           form.appendChild(div);
         });
       } catch (err) {
-        alert("Failed to load questions.");
+        alert("Failed to load questions: " + err.message);
         console.error(err);
       }
     }
@@ -151,9 +157,10 @@
 
         if (response.ok) {
           alert("Exam submitted successfully!");
-          window.location.href = "thankyou.html"; // or redirect as needed
+          window.location.href = "thankyou.html";
         } else {
-          alert("Submission failed.");
+          const err = await response.json();
+          alert("Submission failed: " + (err.message || "Unknown error"));
         }
       } catch (err) {
         alert("An error occurred during submission.");
