@@ -1,22 +1,19 @@
 const express = require("express");
+const multer = require("multer");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const multer = require("multer");
 const fs = require("fs");
-const { Parser } = require("json2csv");
 const path = require("path");
+const ExcelJS = require("exceljs");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
-
-// Multer for passport uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
-const upload = multer({ storage });
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?retryWrites=true&w=majority&appName=Cbt", {
@@ -28,7 +25,7 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
 // Schemas
 const studentSchema = new mongoose.Schema({
   name: String,
-  matric: { type: String, unique: true },
+  matric: String,
   department: String,
   phone: String,
   email: String,
@@ -39,18 +36,12 @@ const studentSchema = new mongoose.Schema({
 const examSchema = new mongoose.Schema({
   course: String,
   courseCode: String,
-  questions: [
-    {
-      question: String,
-      options: [String],
-      answer: String,
-    },
-  ],
+  numQuestions: Number,
 });
 
 const questionSchema = new mongoose.Schema({
   courseCode: String,
-  course: String, // NEW: to help carry course title
+  course: String,
   questionText: String,
   options: {
     a: String,
@@ -69,12 +60,10 @@ const resultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-// Models
 const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
 const Question = mongoose.model("Question", questionSchema);
 const Result = mongoose.model("Result", resultSchema);
-
 
 // Session tracking
 const studentSessions = new Set();
@@ -87,13 +76,8 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer config
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext);
-  },
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
 
@@ -109,7 +93,7 @@ function getDepartmentFromMatric(matric) {
     "E": "Electrical Engineering",
     "M": "Mass Communication",
     "A": "Accountancy",
-    "Mlt": "Medical Laboratory Technology"
+    "Mlt": "Medical Laboratory Technology",
   };
   return map[prefix] || "Unknown";
 }
@@ -135,16 +119,17 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
   res.json({ message: "Student registered successfully.", student });
 });
 
-// Login
+// Student Login
 app.post("/api/students/login", async (req, res) => {
-  try {
-    const { matric, password } = req.body;
-    const student = await Student.findOne({ matric, password });
-    if (!student) return res.status(401).json({ message: "Invalid login" });
-    res.json({ message: "Login successful", student });
-  } catch (err) {
-    res.status(500).json({ message: "Login error" });
+  const { matric, password } = req.body;
+  const student = await Student.findOne({ matric, password });
+
+  if (!student) {
+    return res.status(401).json({ message: "Invalid matric number or password." });
   }
+
+  studentSessions.add(matric);
+  res.json({ message: "Login successful", student });
 });
 
 // Dashboard
@@ -153,13 +138,10 @@ app.get("/api/students/dashboard", async (req, res) => {
     const students = await Student.find().select("-password");
     const formatted = students.map((s) => ({
       ...s._doc,
-      passport: s.passport ? `${req.protocol}://${req.get("host")}/uploads/${s.passport}` : null
+      passport: s.passport ? `${req.protocol}://${req.get("host")}/uploads/${s.passport}` : null,
     }));
 
-    res.json({
-      students: formatted,
-      sessions: Array.from(studentSessions),
-    });
+    res.json({ students: formatted, sessions: Array.from(studentSessions) });
   } catch (error) {
     console.error("Dashboard error:", error);
     res.status(500).json({ message: "Failed to load dashboard" });
@@ -185,7 +167,7 @@ app.post("/api/exams", async (req, res) => {
   res.json({ message: "Exam created", exam });
 });
 
-// Store Exam Questions & Auto-create Exam Entry
+// Store Exam Questions
 app.post("/api/exams/:courseCode/questions", async (req, res) => {
   const { courseCode } = req.params;
   const { questions } = req.body;
@@ -208,18 +190,14 @@ app.post("/api/exams/:courseCode/questions", async (req, res) => {
 
   let exam = await Exam.findOne({ courseCode });
   if (!exam) {
-    const newExam = new Exam({
-      course: courseTitle,
-      courseCode,
-      numQuestions: formatted.length
-    });
+    const newExam = new Exam({ course: courseTitle, courseCode, numQuestions: formatted.length });
     await newExam.save();
   }
 
   res.json({ message: "Questions saved successfully" });
 });
 
-// Fetch All Exams
+// Get All Exams
 app.get("/api/exams", async (req, res) => {
   try {
     const exams = await Exam.find();
@@ -230,7 +208,7 @@ app.get("/api/exams", async (req, res) => {
   }
 });
 
-// Fetch All Courses (used in exam-courses.html)
+// Get Courses (Used in exam-courses.html)
 app.get("/api/questions/courses", async (req, res) => {
   try {
     const exams = await Exam.find({}, "course courseCode");
@@ -238,7 +216,6 @@ app.get("/api/questions/courses", async (req, res) => {
       title: exam.course,
       code: exam.courseCode
     }));
-
     res.json({ courses });
   } catch (error) {
     console.error("Failed to fetch courses:", error);
@@ -246,7 +223,7 @@ app.get("/api/questions/courses", async (req, res) => {
   }
 });
 
-// Fetch Questions for Exam
+// Get Questions for Exam
 app.get("/api/exams/:courseCode/questions", async (req, res) => {
   const { courseCode } = req.params;
   try {
@@ -257,118 +234,97 @@ app.get("/api/exams/:courseCode/questions", async (req, res) => {
     res.status(500).json({ message: "Failed to load questions." });
   }
 });
-// Submit Exam – Prevent Duplicates
-app.post("/api/submissions", async (req, res) => {
+
+// Submit Exam Answers
+app.post("/api/exams/:courseCode/submit", async (req, res) => {
+  const { courseCode } = req.params;
+  const { studentMatric, answers } = req.body;
+
+  if (!studentMatric || !answers || typeof answers !== "object") {
+    return res.status(400).json({ message: "Invalid submission data." });
+  }
+
   try {
-    const { studentMatric, courseCode, answers } = req.body;
-
-    const existing = await Result.findOne({ studentMatric, courseCode });
-    if (existing) return res.status(400).json({ message: "Already submitted." });
-
-    const exam = await Exam.findOne({ courseCode });
-    if (!exam) return res.status(404).json({ message: "Exam not found" });
-
+    const questions = await Question.find({ courseCode });
     let score = 0;
-    for (let i = 0; i < exam.questions.length; i++) {
-      if (answers[i] && answers[i] === exam.questions[i].answer) score++;
-    }
+    questions.forEach((q) => {
+      if (answers[q._id] && answers[q._id] === q.correctAnswer) {
+        score++;
+      }
+    });
 
-    const result = new Result({ studentMatric, courseCode, score, total: exam.questions.length });
+    const result = new Result({ studentMatric, courseCode, score, total: questions.length });
     await result.save();
 
-    res.json({ message: "Submission successful" });
+    res.json({ message: "Exam submitted successfully", score, total: questions.length });
   } catch (err) {
-    console.error("Submit error:", err);
-    res.status(500).json({ message: "Submit error" });
+    console.error("Submission error:", err);
+    res.status(500).json({ message: "Failed to submit exam." });
   }
 });
 
-// Fetch Results (Search)
-app.get("/api/results", async (req, res) => {
+// Get Results for a Student
+app.get("/api/results/:studentMatric", async (req, res) => {
+  const { studentMatric } = req.params;
   try {
-    const { matric, name, courseCode } = req.query;
-
-    const studentFilter = {};
-    if (matric) studentFilter.matric = new RegExp(matric, "i");
-    if (name) studentFilter.name = new RegExp(name, "i");
-
-    const students = await Student.find(studentFilter);
-    const exams = await Exam.find({}, "course courseCode");
-    const results = await Result.find();
-
-    const response = [];
-
-    students.forEach(student => {
-      results
-        .filter(r => r.studentMatric === student.matric && (!courseCode || r.courseCode === courseCode))
-        .forEach(r => {
-          const exam = exams.find(e => e.courseCode === r.courseCode);
-          response.push({
-            name: student.name,
-            matric: student.matric,
-            department: student.department,
-            course: exam?.course || "Unknown",
-            courseCode: r.courseCode,
-            score: r.score,
-            total: r.total,
-            timestamp: r.timestamp,
-            passport: student.passport
-              ? `${req.protocol}://${req.get("host")}/uploads/${student.passport}`
-              : null,
-          });
-        });
-    });
-
-    res.json({ results: response });
+    const results = await Result.find({ studentMatric });
+    res.json(results);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch results" });
+    console.error("Error fetching results:", err);
+    res.status(500).json({ message: "Unable to fetch results." });
   }
 });
 
-// Download Results as CSV
+// Download All Results as Excel
 app.get("/api/results/download", async (req, res) => {
   try {
-    const { matric, name, courseCode } = req.query;
-
-    const studentFilter = {};
-    if (matric) studentFilter.matric = new RegExp(matric, "i");
-    if (name) studentFilter.name = new RegExp(name, "i");
-
-    const students = await Student.find(studentFilter);
-    const exams = await Exam.find({}, "course courseCode");
-    const results = await Result.find();
-
-    const data = [];
-
-    students.forEach(student => {
-      results
-        .filter(r => r.studentMatric === student.matric && (!courseCode || r.courseCode === courseCode))
-        .forEach(r => {
-          const exam = exams.find(e => e.courseCode === r.courseCode);
-          data.push({
-            Name: student.name,
-            Matric: student.matric,
-            Department: student.department,
-            Course: exam?.course || "Unknown",
-            CourseCode: r.courseCode,
-            Score: r.score,
-            Total: r.total,
-            Timestamp: r.timestamp.toLocaleString(),
-          });
-        });
+    const results = await Result.find().sort({ timestamp: -1 });
+    const students = await Student.find();
+    const studentMap = {};
+    students.forEach(s => {
+      studentMap[s.matric] = s;
     });
 
-    const parser = new Parser();
-    const csv = parser.parse(data);
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("CBT Results");
 
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=results.csv");
-    res.status(200).send(csv);
+    sheet.columns = [
+      { header: "Matric", key: "matric", width: 15 },
+      { header: "Name", key: "name", width: 25 },
+      { header: "Department", key: "department", width: 25 },
+      { header: "Course Code", key: "courseCode", width: 15 },
+      { header: "Score", key: "score", width: 10 },
+      { header: "Total", key: "total", width: 10 },
+      { header: "Percentage", key: "percentage", width: 15 },
+      { header: "Date", key: "date", width: 25 },
+    ];
+
+    results.forEach(result => {
+      const student = studentMap[result.studentMatric] || {};
+      sheet.addRow({
+        matric: result.studentMatric,
+        name: student.name || "Unknown",
+        department: student.department || "Unknown",
+        courseCode: result.courseCode,
+        score: result.score,
+        total: result.total,
+        percentage: ((result.score / result.total) * 100).toFixed(2) + "%",
+        date: new Date(result.timestamp).toLocaleString(),
+      });
+    });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=cbt-results.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
-    res.status(500).json({ message: "CSV generation failed" });
+    console.error("Excel download error:", err);
+    res.status(500).json({ message: "Failed to download results." });
   }
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`CBT backend running on port ${PORT}`));
+// Start server
+app.listen(PORT, () => {
+  console.log(`CBT server running at http://localhost:${PORT}`);
+});
