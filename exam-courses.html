@@ -32,7 +32,7 @@
   <div id="examList"></div>
 
   <script>
-    // Check student login
+    // Check if student is logged in
     const student = JSON.parse(localStorage.getItem("student"));
     if (!student) {
       alert("Please login first.");
@@ -52,11 +52,10 @@
           div.className = "exam-item";
           div.textContent = `${course.title} (${course.code})`;
           div.addEventListener("click", () => {
-            // Save exam data to localStorage as "selectedExam"
-            localStorage.setItem("selectedExam", JSON.stringify({
-              courseTitle: course.title,
-              courseCode: course.code
-            }));
+            // Save course data in localStorage
+            localStorage.setItem("courseTitle", course.title);
+            localStorage.setItem("courseCode", course.code);
+            // Redirect to exam page
             window.location.href = "exam.html";
           });
           examList.appendChild(div);
