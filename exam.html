@@ -106,7 +106,7 @@
 
     async function fetchQuestions() {
       try {
-        const res = await fetch(`https://cbt-system.onrender.com/api/questions/${courseCode}`);
+        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/questions`);
         const data = await res.json();
         questions = data.questions;
         if (!questions || questions.length === 0) {
