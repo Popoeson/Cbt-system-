@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const Result = require("./models/Result");
+const Student = require("./models/Student");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -294,6 +296,56 @@ app.get("/api/results/:studentMatric", async (req, res) => {
   } catch (err) {
     console.error("Error fetching results:", err);
     res.status(500).json({ message: "Unable to fetch results." });
+  }
+});
+
+// Serve the results HTML page at /results
+app.get("/results", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "results.html"));
+});
+
+// CSV Download route
+app.get("/api/results/download", async (req, res) => {
+  try {
+    const results = await Result.find();
+    const students = await Student.find();
+
+    // Create student map by matric
+    const studentMap = {};
+    students.forEach(s => {
+      studentMap[s.matric] = s;
+    });
+
+    // Build CSV rows
+    const rows = [
+      ["Matric", "Name", "Department", "Course Code", "Score", "Total", "Percentage", "Date"]
+    ];
+
+    results.forEach(r => {
+      const student = studentMap[r.studentMatric] || {};
+      const percentage = ((r.score / r.total) * 100).toFixed(2) + "%";
+      const date = new Date(r.timestamp).toLocaleString();
+
+      rows.push([
+        r.studentMatric,
+        student.name || "N/A",
+        student.department || "N/A",
+        r.courseCode,
+        r.score,
+        r.total,
+        percentage,
+        date
+      ]);
+    });
+
+    const csv = rows.map(r => r.join(",")).join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=results.csv");
+    res.send(csv);
+  } catch (err) {
+    console.error("Download error:", err);
+    res.status(500).json({ message: "Failed to download results." });
   }
 });
 
