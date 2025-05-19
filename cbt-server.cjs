@@ -281,15 +281,29 @@ async function startServer() {
     }
   });
 
-  // Get JSON results
-  app.get("/api/results", async (req, res) => {
-    try {
-      const results = await Result.find();
-      res.json(results);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to fetch results" });
-    }
-  });
+// Get JSON results with student details
+app.get("/api/results", async (req, res) => {
+  try {
+    const results = await Result.find();
+    const students = await Student.find();
+
+    const enriched = results.map(result => {
+      const student = students.find(s => s.matric === result.studentMatric);
+      return {
+        name: student?.name || "Unknown",
+        matric: result.studentMatric,
+        department: student?.department || "Unknown",
+        courseCode: result.courseCode,
+        score: result.score,
+        total: result.total,
+      };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch results" });
+  }
+});
 
   // Download results as CSV
   app.get("/api/results/download", async (req, res) => {
