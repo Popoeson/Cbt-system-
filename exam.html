@@ -86,7 +86,7 @@
         <p><strong>Department:</strong> <span id="student-department"></span></p>
       </div>
     </div>
-    <div id="exam-timer">10:00</div>
+    <div id="exam-timer">--:--</div>
   </div>
 
   <form id="exam-form"><p>Loading questions...</p></form>
@@ -94,146 +94,152 @@
   <button id="submit-btn">Submit Exam</button>
 
   <script>
-      const student = JSON.parse(localStorage.getItem("student"));
-      const courseCode = localStorage.getItem("courseCode");
-      if (!student || !courseCode) {
-       alert("Missing student or course data. Redirecting...");
+    const student = JSON.parse(localStorage.getItem("student"));
+    const courseCode = localStorage.getItem("courseCode");
+    if (!student || !courseCode) {
+      alert("Missing student or course data. Redirecting...");
       window.location.href = "exam-courses.html";
-       }
+    }
 
-      document.getElementById("student-name").textContent = student.name;
-      document.getElementById("student-matric").textContent = student.matric;
-      document.getElementById("student-department").textContent = student.department;
-      document.getElementById("student-passport").src = student.passport;
- 
-      let questions = [];
-      let timeLimit = 10; // default fallback
-      let timeLeft;
-      let hasSubmitted = false;
+    document.getElementById("student-name").textContent = student.name;
+    document.getElementById("student-matric").textContent = student.matric;
+    document.getElementById("student-department").textContent = student.department;
+    document.getElementById("student-passport").src = student.passport;
 
-      async function fetchQuestions() {
+    let questions = [];
+    let timeLeft = 10 * 60; // fallback in seconds
+    let hasSubmitted = false;
+
+    async function fetchExamDetailsAndQuestions() {
       try {
-      const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/questions`);
-      const data = await res.json();
-      questions = data.questions || [];
-      timeLimit = data.timeLimit || 10; // <-- Use timeLimit from backend
-      timeLeft = timeLimit * 60; // <-- Convert to seconds
-      startTimer(); // <-- Start the timer only after getting time limit
+        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}`);
+        const data = await res.json();
 
-      const form = document.getElementById("exam-form");
-      if (questions.length === 0) {
-        form.innerHTML = "<p>No questions available for this course.</p>";
-        return;
+        if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
+
+        timeLeft = data.exam.duration * 60; // in seconds
+
+        const qRes = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/questions`);
+        const qData = await qRes.json();
+
+        questions = qData.questions || [];
+
+        if (questions.length === 0) {
+          document.getElementById("exam-form").innerHTML = "<p>No questions available for this course.</p>";
+          return;
         }
+
         renderQuestions();
       } catch (err) {
-      console.error("Failed to load questions:", err);
-      document.getElementById("exam-form").innerHTML = "<p>Error loading questions. Try again later.</p>";
-     }
+        console.error("Error loading exam data:", err);
+        document.getElementById("exam-form").innerHTML = "<p>Error loading exam. Try again later.</p>";
+      } finally {
+        startTimer(); // Start timer after everything loads
+      }
     }
 
     function renderQuestions() {
-    const form = document.getElementById("exam-form");
-    form.innerHTML = "";
-    questions.forEach((q, index) => {
-      const block = document.createElement("div");
-      block.className = "question-block";
+      const form = document.getElementById("exam-form");
+      form.innerHTML = "";
+      questions.forEach((q, index) => {
+        const block = document.createElement("div");
+        block.className = "question-block";
 
-      const qText = document.createElement("div");
-      qText.className = "question-text";
-      qText.textContent = `${index + 1}. ${q.questionText}`;
+        const qText = document.createElement("div");
+        qText.className = "question-text";
+        qText.textContent = `${index + 1}. ${q.questionText}`;
 
-      const optionsDiv = document.createElement("div");
-      optionsDiv.className = "options";
+        const optionsDiv = document.createElement("div");
+        optionsDiv.className = "options";
 
-      for (let key in q.options) {
-        const label = document.createElement("label");
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = q._id;
-        input.value = key;
-        label.appendChild(input);
-        label.append(` ${key}. ${q.options[key]}`);
-        optionsDiv.appendChild(label);
+        for (let key in q.options) {
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = q._id;
+          input.value = key;
+          label.appendChild(input);
+          label.append(` ${key}. ${q.options[key]}`);
+          optionsDiv.appendChild(label);
+        }
+
+        block.appendChild(qText);
+        block.appendChild(optionsDiv);
+        form.appendChild(block);
+      });
+    }
+
+    function startTimer() {
+      const timer = document.getElementById("exam-timer");
+      const interval = setInterval(() => {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        timer.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        timeLeft--;
+
+        if (timeLeft < 0) {
+          clearInterval(interval);
+          submitExam();
+        }
+      }, 1000);
+    }
+
+    function collectAnswers() {
+      const formData = new FormData(document.getElementById("exam-form"));
+      const answers = {};
+      for (let [key, value] of formData.entries()) {
+        answers[key] = value;
       }
-
-      block.appendChild(qText);
-      block.appendChild(optionsDiv);
-      form.appendChild(block);
-    });
-  }
-
-  function collectAnswers() {
-    const formData = new FormData(document.getElementById("exam-form"));
-    const answers = {};
-    for (let [key, value] of formData.entries()) {
-      answers[key] = value;
+      return answers;
     }
-    return answers;
-  }
 
-  function hasUnansweredQuestions() {
-    return Object.keys(collectAnswers()).length < questions.length;
-  }
+    function hasUnansweredQuestions() {
+      return Object.keys(collectAnswers()).length < questions.length;
+    }
 
-  function submitExam() {
-    if (hasSubmitted) return;
-    hasSubmitted = true;
+    function submitExam() {
+      if (hasSubmitted) return;
+      hasSubmitted = true;
 
-    const answers = collectAnswers();
-    fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        studentMatric: student.matric,
-        answers: answers
+      const answers = collectAnswers();
+      fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentMatric: student.matric,
+          answers: answers
+        })
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("Exam submitted successfully!");
-      localStorage.removeItem("courseCode");
-      window.location.href = "student-login.html";
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Submission failed. Try again.");
-      hasSubmitted = false;
-    });
-  }
-
-  document.getElementById("submit-btn").addEventListener("click", () => {
-    if (hasUnansweredQuestions()) {
-      if (!confirm("Some questions are unanswered. Submit anyway?")) return;
-    } else {
-      if (!confirm("Are you sure you want to submit your exam?")) return;
+      .then(res => res.json())
+      .then(data => {
+        alert("Exam submitted successfully!");
+        localStorage.removeItem("courseCode");
+        window.location.href = "student-login.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Submission failed. Try again.");
+        hasSubmitted = false;
+      });
     }
-    submitExam();
-  });
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
+    document.getElementById("submit-btn").addEventListener("click", () => {
+      if (hasUnansweredQuestions()) {
+        if (!confirm("Some questions are unanswered. Submit anyway?")) return;
+      } else {
+        if (!confirm("Are you sure you want to submit your exam?")) return;
+      }
       submitExam();
-    }
-  });
+    });
 
-  function startTimer() {
-    const timer = document.getElementById("exam-timer");
-    const interval = setInterval(() => {
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      timer.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-      timeLeft--;
-
-      if (timeLeft < 0) {
-        clearInterval(interval);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
         submitExam();
       }
-    }, 1000);
-  }
+    });
 
-  fetchQuestions();
-      </script>
+    fetchExamDetailsAndQuestions();
+  </script>
 
 </body>
   </html>
