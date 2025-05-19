@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const csv = require("csv-writer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -300,7 +301,7 @@ app.get("/api/results/:studentMatric", async (req, res) => {
 // Download result as CSV
 app.get("/api/results/download", async (req, res) => {
   try {
-    const submissions = await Submission.find();
+    const submissions = await Result.find();
     const students = await Student.find();
 
     const records = submissions.map(sub => {
