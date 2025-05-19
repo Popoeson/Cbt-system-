@@ -103,7 +103,7 @@ function getDepartmentFromMatric(matric) {
 }
 
 async function startServer() {
-  // Student registration
+  // Student Registration
   app.post("/api/students/register", upload.single("passport"), async (req, res) => {
     const { name, matric, phone, email, password } = req.body;
     const passport = req.file ? req.file.filename : null;
@@ -120,10 +120,11 @@ async function startServer() {
 
     const student = new Student({ name, matric, department, phone, email, password, passport });
     await student.save();
+
     res.json({ message: "Student registered successfully.", student });
   });
 
-  // Student login
+  // Student Login
   app.post("/api/students/login", async (req, res) => {
     const { matric, password } = req.body;
     const student = await Student.findOne({ matric, password });
@@ -136,7 +137,7 @@ async function startServer() {
     res.json({ message: "Login successful", student });
   });
 
-  // Student dashboard
+  // Student Dashboard
   app.get("/api/students/dashboard", async (req, res) => {
     try {
       const students = await Student.find().select("-password");
@@ -154,7 +155,7 @@ async function startServer() {
     }
   });
 
-  // Create exam
+  // Create Exam
   app.post("/api/exams", async (req, res) => {
     const { course, courseCode, numQuestions } = req.body;
 
@@ -169,10 +170,11 @@ async function startServer() {
 
     const exam = new Exam({ course, courseCode, numQuestions });
     await exam.save();
+
     res.json({ message: "Exam created", exam });
   });
 
-  // Add questions
+  // Save Questions
   app.post("/api/exams/:courseCode/questions", async (req, res) => {
     const { courseCode } = req.params;
     const { questions } = req.body;
@@ -182,6 +184,7 @@ async function startServer() {
     }
 
     const courseTitle = questions[0]?.course || "Untitled Course";
+
     const formatted = questions.map(q => ({
       courseCode,
       course: q.course || courseTitle,
@@ -194,14 +197,18 @@ async function startServer() {
 
     let exam = await Exam.findOne({ courseCode });
     if (!exam) {
-      const newExam = new Exam({ course: courseTitle, courseCode, numQuestions: formatted.length });
+      const newExam = new Exam({
+        course: courseTitle,
+        courseCode,
+        numQuestions: formatted.length
+      });
       await newExam.save();
     }
 
     res.json({ message: "Questions saved successfully" });
   });
 
-  // Get exams
+  // List Exams
   app.get("/api/exams", async (req, res) => {
     try {
       const exams = await Exam.find();
@@ -211,7 +218,7 @@ async function startServer() {
     }
   });
 
-  // Get course codes
+  // Get Course List for Frontend
   app.get("/api/questions/courses", async (req, res) => {
     try {
       const exams = await Exam.find({}, "course courseCode");
@@ -219,13 +226,14 @@ async function startServer() {
         title: exam.course,
         code: exam.courseCode
       }));
+
       res.json({ courses });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch courses." });
     }
   });
 
-  // Get exam questions
+  // Load Questions for a Course
   app.get("/api/exams/:courseCode/questions", async (req, res) => {
     const { courseCode } = req.params;
     try {
@@ -236,7 +244,7 @@ async function startServer() {
     }
   });
 
-  // Submit exam
+  // Submit Exam
   app.post("/api/exams/:courseCode/submit", async (req, res) => {
     const { courseCode } = req.params;
     const { studentMatric, answers } = req.body;
@@ -262,24 +270,28 @@ async function startServer() {
       });
 
       await result.save();
-      res.json({ message: "Exam submitted successfully", score, total: questions.length });
+
+      res.json({
+        message: "Exam submitted successfully",
+        score,
+        total: questions.length,
+      });
     } catch (err) {
       res.status(500).json({ message: "Failed to submit exam." });
     }
   });
 
-  // Get results for a student
-  app.get("/api/results/:studentMatric", async (req, res) => {
-    const { studentMatric } = req.params;
+  // Get JSON results
+  app.get("/api/results", async (req, res) => {
     try {
-      const results = await Result.find({ studentMatric });
+      const results = await Result.find();
       res.json(results);
     } catch (err) {
-      res.status(500).json({ message: "Unable to fetch results." });
+      res.status(500).json({ error: "Failed to fetch results" });
     }
   });
 
-  // Download all results as CSV
+  // Download results as CSV
   app.get("/api/results/download", async (req, res) => {
     try {
       const submissions = await Result.find();
@@ -318,8 +330,8 @@ async function startServer() {
     }
   });
 
-  // Start server
+  // Start Server
   app.listen(PORT, () => {
     console.log(`CBT server running at http://localhost:${PORT}`);
   });
-    }
+  }
