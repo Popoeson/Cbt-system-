@@ -36,10 +36,13 @@ const studentSchema = new mongoose.Schema({
   password: String,
   passport: String,
 });
-
+// Exam Schema
 const examSchema = new mongoose.Schema({
   course: String,
   courseCode: String,
+  department: String,
+  level: String,
+  duration: Number, // in minutes
   numQuestions: Number,
 });
 
@@ -157,22 +160,22 @@ async function startServer() {
 
   // Create Exam
   app.post("/api/exams", async (req, res) => {
-    const { course, courseCode, numQuestions } = req.body;
+  const { course, courseCode, department, level, duration, numQuestions } = req.body;
 
-    if (!course || !courseCode || !numQuestions) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
+  if (!course || !courseCode || !department || !level || !duration || !numQuestions) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
 
-    const existing = await Exam.findOne({ courseCode });
-    if (existing) {
-      return res.status(409).json({ message: "Exam already exists for this course code." });
-    }
+  const existing = await Exam.findOne({ courseCode });
+  if (existing) {
+    return res.status(409).json({ message: "Exam already exists for this course code." });
+  }
 
-    const exam = new Exam({ course, courseCode, numQuestions });
-    await exam.save();
+  const exam = new Exam({ course, courseCode, department, level, duration, numQuestions });
+  await exam.save();
 
-    res.json({ message: "Exam created", exam });
-  });
+  res.json({ message: "Exam created", exam });
+});
 
   // Save Questions
   app.post("/api/exams/:courseCode/questions", async (req, res) => {
