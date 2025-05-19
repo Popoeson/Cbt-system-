@@ -27,7 +27,7 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    input, button {
+    input, select, button {
       display: block;
       width: 100%;
       margin-bottom: 15px;
@@ -53,43 +53,69 @@
     <input type="text" id="course" placeholder="Course Title" required />
     <input type="text" id="courseCode" placeholder="Course Code" required />
     <input type="number" id="numQuestions" placeholder="Number of Questions" required min="1" />
+    
+    <select id="department" required>
+      <option value="">Select Department</option>
+      <option value="Computer Science">Computer Science</option>
+      <option value="Science Lab Tech">Science Lab Tech</option>
+      <option value="Business Admin">Business Admin</option>
+      <option value="Mass Communication">Mass Communication</option>
+      <option value="Estate Management">Estate Management</option>
+      <option value="Electrical Engineering">Electrical Engineering</option>
+      <option value="Computer Engineering">Computer Engineering</option>
+      <option value="Accountancy">Accountancy</option>
+      <option value="Medical Lab Tech">Medical Lab Tech</option>
+    </select>
+
+    <select id="level" required>
+      <option value="">Select Level</option>
+      <option value="ND 1">ND 1</option>
+      <option value="ND 2">ND 2</option>
+      <option value="HND 1">HND 1</option>
+      <option value="HND 2">HND 2</option>
+    </select>
+
+    <input type="number" id="duration" placeholder="Duration (minutes)" required min="1" />
+
     <button type="submit">Set Exam Questions</button>
   </form>
 
   <script>
-  const BASE_URL = "https://cbt-system.onrender.com";
+    const BASE_URL = "https://cbt-system.onrender.com";
 
-  document.getElementById("setExamForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+    document.getElementById("setExamForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-    const course = document.getElementById("course").value.trim();
-    const courseCode = document.getElementById("courseCode").value.trim();
-    const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
+      const course = document.getElementById("course").value.trim();
+      const courseCode = document.getElementById("courseCode").value.trim();
+      const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
+      const department = document.getElementById("department").value.trim();
+      const level = document.getElementById("level").value.trim();
+      const duration = parseInt(document.getElementById("duration").value.trim());
 
-    const examCourse = { course, courseCode, numQuestions };
-    localStorage.setItem("examCourse", JSON.stringify(examCourse));
+      const examCourse = { course, courseCode, numQuestions, department, level, duration };
+      localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
-    // Save the exam to the backend
-    try {
-      const res = await fetch(`${BASE_URL}/api/exams`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(examCourse),
-      });
+      try {
+        const res = await fetch(`${BASE_URL}/api/exams`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(examCourse),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        alert("Failed to save exam: " + data.message);
-        return;
+        if (!res.ok) {
+          alert("Failed to save exam: " + data.message);
+          return;
+        }
+
+        window.location.href = "add-questions.html";
+      } catch (err) {
+        console.error(err);
+        alert("Server error.");
       }
-
-      window.location.href = "add-questions.html";
-    } catch (err) {
-      console.error(err);
-      alert("Server error.");
-    }
-  });
-      </script>
+    });
+  </script>
 </body>
-</html>
+  </html>
