@@ -64,6 +64,7 @@ const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
 const Question = mongoose.model("Question", questionSchema);
 const Result = mongoose.model("Result", resultSchema);
+const submissions = await Result.find();
 
 // Session tracking
 const studentSessions = new Set();
