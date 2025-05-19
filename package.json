@@ -1,9 +1,9 @@
 {
   "name": "cbt-system",
   "version": "1.0.0",
-  "main": "cbt-server.js",
+  "main": "cbt-server.cjs",
   "scripts": {
-    "start": "node cbt-server.js"
+    "start": "node cbt-server.cjs"
   },
   "license": "MIT",
   "dependencies": {
