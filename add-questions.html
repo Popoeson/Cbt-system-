@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Add Exam Questions</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
       background-color: #1c1c1c;
@@ -12,6 +13,10 @@
       padding: 20px;
     }
     h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .header-actions {
       text-align: center;
       margin-bottom: 20px;
     }
@@ -39,16 +44,23 @@
     button:hover {
       background-color: #0077aa;
     }
+    #fileInput {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h2 id="courseHeader">Add Questions</h2>
+  <div class="header-actions">
+    <button onclick="document.getElementById('fileInput').click()">Import from Excel</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileImport(event)" />
+  </div>
+
   <form id="questionsForm"></form>
   <button type="button" onclick="submitQuestions()">Submit All Questions</button>
 
   <script>
     const BASE_URL = "https://cbt-system.onrender.com";
-
     const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
     const questionsForm = document.getElementById("questionsForm");
     const courseHeader = document.getElementById("courseHeader");
@@ -60,26 +72,99 @@
 
     courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
 
-    for (let i = 1; i <= exam.numQuestions; i++) {
-      const block = document.createElement("div");
-      block.className = "question-block";
-      block.innerHTML = `
-        <h3>Question ${i}</h3>
-        <textarea name="question" placeholder="Enter question ${i}" required></textarea>
-        <input name="a" placeholder="Option A" required />
-        <input name="b" placeholder="Option B" required />
-        <input name="c" placeholder="Option C" required />
-        <input name="d" placeholder="Option D" required />
-        <select name="correct" required>
-          <option value="">Select Correct Answer</option>
-          <option value="a">A</option>
-          <option value="b">B</option>
-          <option value="c">C</option>
-          <option value="d">D</option>
-        </select>
-        <hr />
-      `;
-      questionsForm.appendChild(block);
+    // Generate empty question blocks
+    function generateQuestionBlocks(num) {
+      questionsForm.innerHTML = "";
+      for (let i = 1; i <= num; i++) {
+        const block = document.createElement("div");
+        block.className = "question-block";
+        block.innerHTML = `
+          <h3>Question ${i}</h3>
+          <textarea name="question" placeholder="Enter question ${i}" required></textarea>
+          <input name="a" placeholder="Option A" required />
+          <input name="b" placeholder="Option B" required />
+          <input name="c" placeholder="Option C" required />
+          <input name="d" placeholder="Option D" required />
+          <select name="correct" required>
+            <option value="">Select Correct Answer</option>
+            <option value="a">A</option>
+            <option value="b">B</option>
+            <option value="c">C</option>
+            <option value="d">D</option>
+          </select>
+          <hr />
+        `;
+        questionsForm.appendChild(block);
+      }
+    }
+
+    generateQuestionBlocks(exam.numQuestions);
+
+    // Import Excel File
+    function handleFileImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        if (rows.length < 2) {
+          alert("Excel file is empty or missing headers.");
+          return;
+        }
+
+        const headers = rows[0].map(h => h.toString().toLowerCase());
+        const qIndex = headers.indexOf("question");
+        const aIndex = headers.indexOf("a");
+        const bIndex = headers.indexOf("b");
+        const cIndex = headers.indexOf("c");
+        const dIndex = headers.indexOf("d");
+        const correctIndex = headers.indexOf("correct");
+
+        if ([qIndex, aIndex, bIndex, cIndex, dIndex, correctIndex].includes(-1)) {
+          alert("Excel file must contain columns: Question, A, B, C, D, Correct.");
+          return;
+        }
+
+        const questions = rows.slice(1).filter(row => row[qIndex]);
+        if (questions.length === 0) {
+          alert("No questions found in the file.");
+          return;
+        }
+
+        exam.numQuestions = questions.length;
+        localStorage.setItem("examCourse", JSON.stringify(exam));
+        questionsForm.innerHTML = "";
+
+        questions.forEach((row, i) => {
+          const block = document.createElement("div");
+          block.className = "question-block";
+          block.innerHTML = `
+            <h3>Question ${i + 1}</h3>
+            <textarea name="question" required>${row[qIndex] || ""}</textarea>
+            <input name="a" value="${row[aIndex] || ""}" required />
+            <input name="b" value="${row[bIndex] || ""}" required />
+            <input name="c" value="${row[cIndex] || ""}" required />
+            <input name="d" value="${row[dIndex] || ""}" required />
+            <select name="correct" required>
+              <option value="">Select Correct Answer</option>
+              <option value="a" ${row[correctIndex]?.toLowerCase() === "a" ? "selected" : ""}>A</option>
+              <option value="b" ${row[correctIndex]?.toLowerCase() === "b" ? "selected" : ""}>B</option>
+              <option value="c" ${row[correctIndex]?.toLowerCase() === "c" ? "selected" : ""}>C</option>
+              <option value="d" ${row[correctIndex]?.toLowerCase() === "d" ? "selected" : ""}>D</option>
+            </select>
+            <hr />
+          `;
+          questionsForm.appendChild(block);
+        });
+
+        alert(`${questions.length} questions loaded from Excel.`);
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     async function submitQuestions() {
@@ -129,4 +214,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
