@@ -116,9 +116,14 @@
         const data = await res.json();
         if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
         timeLeft = data.exam.duration * 60;
+
+        // Show alert to confirm fetched duration
+        alert("Fetched duration: " + data.exam.duration + " minutes");
+
       } catch (err) {
         console.error("Failed to fetch exam details:", err);
-        timeLeft = 10 * 60; // fallback
+        alert("Using fallback duration: 10 minutes");
+        timeLeft = 10 * 60;
       } finally {
         startTimer();
       }
