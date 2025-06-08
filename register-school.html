@@ -68,6 +68,10 @@
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    statusMsg.textContent = "Registering...";
+
+    const formData = new FormData(form);
+
     const formData = new FormData(form);
     try {
       const response = await fetch("https://cbt-system.onrender.com/api/schools/register", {
