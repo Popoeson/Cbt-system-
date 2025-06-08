@@ -36,13 +36,13 @@ const studentSchema = new mongoose.Schema({
   password: String,
   passport: String,
 });
-// Exam Schema
+
 const examSchema = new mongoose.Schema({
   course: String,
   courseCode: String,
   department: String,
   level: String,
-  duration: Number, // in minutes
+  duration: Number,
   numQuestions: Number,
 });
 
@@ -67,10 +67,19 @@ const resultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+// School Schema
+const schoolSchema = new mongoose.Schema({
+  name: String,
+  address: String,
+  email: String,
+  logo: String,
+});
+
 const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
 const Question = mongoose.model("Question", questionSchema);
 const Result = mongoose.model("Result", resultSchema);
+const School = mongoose.model("School", schoolSchema);
 
 // Session tracking
 const studentSessions = new Set();
@@ -160,22 +169,22 @@ async function startServer() {
 
   // Create Exam
   app.post("/api/exams", async (req, res) => {
-  const { course, courseCode, department, level, duration, numQuestions } = req.body;
+    const { course, courseCode, department, level, duration, numQuestions } = req.body;
 
-  if (!course || !courseCode || !department || !level || !duration || !numQuestions) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
+    if (!course || !courseCode || !department || !level || !duration || !numQuestions) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
 
-  const existing = await Exam.findOne({ courseCode });
-  if (existing) {
-    return res.status(409).json({ message: "Exam already exists for this course code." });
-  }
+    const existing = await Exam.findOne({ courseCode });
+    if (existing) {
+      return res.status(409).json({ message: "Exam already exists for this course code." });
+    }
 
-  const exam = new Exam({ course, courseCode, department, level, duration, numQuestions });
-  await exam.save();
+    const exam = new Exam({ course, courseCode, department, level, duration, numQuestions });
+    await exam.save();
 
-  res.json({ message: "Exam created", exam });
-});
+    res.json({ message: "Exam created", exam });
+  });
 
   // Save Questions
   app.post("/api/exams/:courseCode/questions", async (req, res) => {
@@ -284,29 +293,29 @@ async function startServer() {
     }
   });
 
-// Get JSON results with student details
-app.get("/api/results", async (req, res) => {
-  try {
-    const results = await Result.find();
-    const students = await Student.find();
+  // Get JSON results with student details
+  app.get("/api/results", async (req, res) => {
+    try {
+      const results = await Result.find();
+      const students = await Student.find();
 
-    const enriched = results.map(result => {
-      const student = students.find(s => s.matric === result.studentMatric);
-      return {
-        name: student?.name || "Unknown",
-        matric: result.studentMatric,
-        department: student?.department || "Unknown",
-        courseCode: result.courseCode,
-        score: result.score,
-        total: result.total,
-      };
-    });
+      const enriched = results.map(result => {
+        const student = students.find(s => s.matric === result.studentMatric);
+        return {
+          name: student?.name || "Unknown",
+          matric: result.studentMatric,
+          department: student?.department || "Unknown",
+          courseCode: result.courseCode,
+          score: result.score,
+          total: result.total,
+        };
+      });
 
-    res.json(enriched);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch results" });
-  }
-});
+      res.json(enriched);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch results" });
+    }
+  });
 
   // Download results as CSV
   app.get("/api/results/download", async (req, res) => {
@@ -347,8 +356,40 @@ app.get("/api/results", async (req, res) => {
     }
   });
 
+  // ===== School Registration =====
+  app.post("/api/schools/register", upload.single("logo"), async (req, res) => {
+    try {
+      const { name, address, email } = req.body;
+      const logo = req.file ? req.file.filename : null;
+
+      if (!name || !address || !email || !logo) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+
+      const school = new School({ name, address, email, logo });
+      await school.save();
+
+      res.json({ message: "School registered successfully.", school });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to register school." });
+    }
+  });
+
+  app.get("/api/schools", async (req, res) => {
+    try {
+      const schools = await School.find();
+      const formatted = schools.map((s) => ({
+        ...s._doc,
+        logo: s.logo ? `${req.protocol}://${req.get("host")}/uploads/${s.logo}` : null,
+      }));
+      res.json({ schools: formatted });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch schools." });
+    }
+  });
+
   // Start Server
   app.listen(PORT, () => {
     console.log(`CBT server running at http://localhost:${PORT}`);
   });
-  }
+    }
