@@ -26,36 +26,36 @@
   <div id="schoolList">Loading...</div>
 
   <script>
-    async function loadSchools() {
-      const container = document.getElementById("schoolList");
-      try {
-        const response = await fetch("https://cbt-system.onrender.com/api/schools");
-        const data = await response.json();
+  async function loadSchools() {
+    const container = document.getElementById("schoolList");
+    try {
+      const response = await fetch("https://cbt-system.onrender.com/api/schools");
+      const data = await response.json();
 
-        if (response.ok) {
-          if (data.length === 0) {
-            container.innerHTML = "<p>No schools found.</p>";
-            return;
-          }
-
-          container.innerHTML = "";
-          data.forEach(school => {
-            container.innerHTML += `
-              <div class="school">
-                <h3>${school.name}</h3>
-                <p><strong>Address:</strong> ${school.address}</p>
-                <p><strong>Email:</strong> ${school.email}</p>
-                <img src="https://cbt-system.onrender.com/uploads/${school.logo}" alt="Logo" style="max-width: 100px;" />
-              </div>
-            `;
-          });
-        } else {
-          container.textContent = data.message || "Failed to load schools.";
+      if (response.ok) {
+        if (data.schools.length === 0) {
+          container.innerHTML = "<p>No schools found.</p>";
+          return;
         }
-      } catch (error) {
-        container.textContent = "Failed to load schools. Please try again.";
-      }
-    }
 
-    loadSchools();
-            </script>
+        container.innerHTML = "";
+        data.schools.forEach(school => {
+          container.innerHTML += `
+            <div class="school">
+              <h3>${school.name}</h3>
+              <p><strong>Address:</strong> ${school.address}</p>
+              <p><strong>Email:</strong> ${school.email}</p>
+              <img src="${school.logo}" alt="Logo" style="max-width: 100px;" />
+            </div>
+          `;
+        });
+      } else {
+        container.textContent = data.message || "Failed to load schools.";
+      }
+    } catch (error) {
+      container.textContent = "Failed to load schools. Please try again.";
+    }
+  }
+
+  loadSchools();
+      </script>
