@@ -1,0 +1,35 @@
+<button onclick="payWithPaystack()">Buy Token (₦2000)</button>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+  function payWithPaystack() {
+    const studentEmail = localStorage.getItem('studentEmail') || prompt("Enter your email:");
+    
+    var handler = PaystackPop.setup({
+      key: 'pk_test_xxxxxxxxxxxxxxxxxxx', // replace with your public key
+      email: studentEmail,
+      amount: 200000, // Amount in Kobo: ₦2000 = 200000
+      currency: "NGN",
+      ref: 'CBT_' + Math.floor(Math.random() * 1000000000 + 1), // unique ref
+      callback: function(response) {
+        fetch('https://cbt-system.onrender.com/api/payment/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reference: response.reference, email: studentEmail })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          if (data.token) {
+            localStorage.setItem('myToken', data.token);
+          }
+        });
+      },
+      onClose: function() {
+        alert('Transaction was not completed');
+      }
+    });
+
+    handler.openIframe();
+  }
+</script>
