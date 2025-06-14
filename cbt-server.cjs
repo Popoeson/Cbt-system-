@@ -1,4 +1,4 @@
-const express = require("express");
+1const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -152,12 +152,22 @@ async function startServer() {
     return res.status(400).json({ message: "Invalid or already used token." });
   }
 
-  // Check for existing student
-  const existing = await Student.findOne({ matric });
-  if (existing) {
-    return res.status(400).json({ message: "Matric number already registered." });
+    // Check for duplicate student (matric or email)
+app.post("/api/students/check-duplicate", async (req, res) => {
+  const { matric, email } = req.body;
+
+  if (!matric || !email) {
+    return res.status(400).json({ message: "Matric and email are required." });
   }
 
+  const existing = await Student.findOne({ $or: [{ matric }, { email }] });
+  if (existing) {
+    return res.status(200).json({ exists: true, message: "Student with this matric or email already exists." });
+  }
+
+  res.json({ exists: false });
+});
+    
   // Save student
   const student = new Student({ name, matric, department, phone, email, password, passport });
   await student.save();
