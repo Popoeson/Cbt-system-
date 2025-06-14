@@ -115,26 +115,41 @@ function getDepartmentFromMatric(matric) {
 }
 
 async function startServer() {
+  
   // Student Registration
+  
   app.post("/api/students/register", upload.single("passport"), async (req, res) => {
-    const { name, matric, phone, email, password } = req.body;
-    const passport = req.file ? req.file.filename : null;
-    const department = getDepartmentFromMatric(matric);
+  const { name, matric, phone, email, password, token } = req.body;
+  const passport = req.file ? req.file.filename : null;
+  const department = getDepartmentFromMatric(matric);
 
-    if (!name || !matric || !phone || !email || !password || !passport) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
+  if (!name || !matric || !phone || !email || !password || !passport || !token) {
+    return res.status(400).json({ message: "All fields and token are required." });
+  }
 
-    const existing = await Student.findOne({ matric });
-    if (existing) {
-      return res.status(400).json({ message: "Matric number already registered." });
-    }
+  // Check if token exists and is valid
+  const validToken = await Token.findOne({ token, status: 'success' });
 
-    const student = new Student({ name, matric, department, phone, email, password, passport });
-    await student.save();
+  if (!validToken) {
+    return res.status(400).json({ message: "Invalid or already used token." });
+  }
 
-    res.json({ message: "Student registered successfully.", student });
-  });
+  // Check for existing student
+  const existing = await Student.findOne({ matric });
+  if (existing) {
+    return res.status(400).json({ message: "Matric number already registered." });
+  }
+
+  // Save student
+  const student = new Student({ name, matric, department, phone, email, password, passport });
+  await student.save();
+
+  // Mark token as used
+  validToken.status = 'used';
+  await validToken.save();
+
+  res.json({ message: "Student registered successfully.", student });
+});
 
   // Student Login
   app.post("/api/students/login", async (req, res) => {
