@@ -48,6 +48,10 @@
       padding: 5px;
       color: white;
     }
+    input[readonly] {
+      background-color: #444;
+      color: #ccc;
+    }
     button {
       background-color: #00aaff;
       color: white;
@@ -66,6 +70,10 @@
 <body>
   <form id="registerForm" enctype="multipart/form-data">
     <h2>Student Registration</h2>
+
+    <!-- Visible, readonly token input -->
+    <input type="text" name="token" id="tokenInput" readonly required />
+
     <input type="text" name="name" placeholder="Full Name" required />
     <input type="text" name="matric" placeholder="Matric Number" required />
     <input type="text" name="phone" placeholder="Phone Number" required />
@@ -83,6 +91,17 @@
   </form>
 
   <script>
+    // Prefill token from localStorage
+    const token = localStorage.getItem("validToken");
+    const tokenInput = document.getElementById("tokenInput");
+
+    if (!token) {
+      alert("No valid token found. Please validate your token first.");
+      window.location.href = "token-validation.html";
+    } else {
+      tokenInput.value = token;
+    }
+
     function togglePassword() {
       const passwordInput = document.getElementById("password");
       const toggle = document.querySelector(".toggle-password");
@@ -101,9 +120,13 @@
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      if (!confirm("Are you sure you want to submit this registration?")) return;
+
       const formData = new FormData(registerForm);
       const matric = formData.get("matric");
+      const email = formData.get("email");
 
+      // Detect department
       let department = "";
       if (matric.startsWith("S/")) department = "Science Laboratory Technology";
       else if (matric.startsWith("Cos/")) department = "Computer Science";
@@ -119,6 +142,20 @@
       formData.append("department", department);
 
       try {
+        // Optional: Pre-check for duplicate email/matric
+        const duplicateCheck = await fetch(`https://cbt-system.onrender.com/api/students/check-duplicate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, matric })
+        });
+        const dupResult = await duplicateCheck.json();
+
+        if (!duplicateCheck.ok || dupResult.exists) {
+          responseMsg.textContent = dupResult.message || "Matric or Email already exists.";
+          responseMsg.style.color = "red";
+          return;
+        }
+
         const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
           method: "POST",
           body: formData,
@@ -128,12 +165,22 @@
         responseMsg.textContent = data.message;
         responseMsg.style.color = res.ok ? "lightgreen" : "red";
 
-        if (res.ok) registerForm.reset();
+        if (res.ok) {
+          // Mark token as used
+          await fetch(`https://cbt-token-purchase.onrender.com/api/tokens/mark-used/${token}`, {
+            method: "PATCH",
+          });
+
+          // Clear token and reset form
+          localStorage.removeItem("validToken");
+          registerForm.reset();
+        }
       } catch (err) {
         responseMsg.textContent = "Registration failed. Please try again.";
         responseMsg.style.color = "red";
+        console.error(err);
       }
     });
   </script>
 </body>
-</html>
+  </html>
