@@ -91,10 +91,12 @@
   </form>
 
   <script>
-    // Prefill token from localStorage
     const token = localStorage.getItem("validToken");
     const tokenInput = document.getElementById("tokenInput");
+    const registerForm = document.getElementById("registerForm");
+    const responseMsg = document.getElementById("responseMsg");
 
+    // Prefill token or redirect
     if (!token) {
       alert("No valid token found. Please validate your token first.");
       window.location.href = "token-validation.html";
@@ -114,9 +116,6 @@
       }
     }
 
-    const registerForm = document.getElementById("registerForm");
-    const responseMsg = document.getElementById("responseMsg");
-
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -126,61 +125,61 @@
       const matric = formData.get("matric");
       const email = formData.get("email");
 
-      // Detect department
-      let department = "";
-      if (matric.startsWith("S/")) department = "Science Laboratory Technology";
-      else if (matric.startsWith("Cos/")) department = "Computer Science";
-      else if (matric.startsWith("Coe/")) department = "Computer Engineering";
-      else if (matric.startsWith("B/")) department = "Business Administration";
-      else if (matric.startsWith("Est/")) department = "Estate Management";
-      else if (matric.startsWith("E/")) department = "Electrical Engineering";
-      else if (matric.startsWith("M/")) department = "Mass Communication";
-      else if (matric.startsWith("A/")) department = "Accountancy";
-      else if (matric.startsWith("Mlt/")) department = "Medical Laboratory Technology";
-      else department = "Unknown";
+      // Department Detection Logic
+      let department = "Unknown";
+      const prefix = matric.toLowerCase();
+      if (prefix.startsWith("s/")) department = "Science Laboratory Technology";
+      else if (prefix.startsWith("cos/")) department = "Computer Science";
+      else if (prefix.startsWith("coe/")) department = "Computer Engineering";
+      else if (prefix.startsWith("b/")) department = "Business Administration";
+      else if (prefix.startsWith("est/")) department = "Estate Management";
+      else if (prefix.startsWith("e/")) department = "Electrical Engineering";
+      else if (prefix.startsWith("m/")) department = "Mass Communication";
+      else if (prefix.startsWith("a/")) department = "Accountancy";
+      else if (prefix.startsWith("mlt/")) department = "Medical Laboratory Technology";
 
       formData.append("department", department);
 
       try {
-        // Optional: Pre-check for duplicate email/matric
-        const duplicateCheck = await fetch(`https://cbt-system.onrender.com/api/students/check-duplicate`, {
+        // 1. Check for duplicate
+        const dupCheck = await fetch("https://cbt-system.onrender.com/api/students/check-duplicate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, matric })
+          body: JSON.stringify({ email, matric }),
         });
-        const dupResult = await duplicateCheck.json();
-
-        if (!duplicateCheck.ok || dupResult.exists) {
-          responseMsg.textContent = dupResult.message || "Matric or Email already exists.";
+        const dupData = await dupCheck.json();
+        if (!dupCheck.ok || dupData.exists) {
+          responseMsg.textContent = dupData.message || "Matric or Email already exists.";
           responseMsg.style.color = "red";
           return;
         }
 
+        // 2. Register student
         const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
           method: "POST",
           body: formData,
         });
-
         const data = await res.json();
         responseMsg.textContent = data.message;
         responseMsg.style.color = res.ok ? "lightgreen" : "red";
 
         if (res.ok) {
-          // Mark token as used
+          // 3. Mark token as used
           await fetch(`https://cbt-token-purchase.onrender.com/api/tokens/mark-used/${token}`, {
             method: "PATCH",
           });
 
-          // Clear token and reset form
+          // 4. Cleanup
           localStorage.removeItem("validToken");
           registerForm.reset();
         }
+
       } catch (err) {
-        responseMsg.textContent = "Registration failed. Please try again.";
-        responseMsg.style.color = "red";
         console.error(err);
+        responseMsg.textContent = "Something went wrong. Please try again.";
+        responseMsg.style.color = "red";
       }
     });
   </script>
 </body>
-  </html>
+                          </html>
