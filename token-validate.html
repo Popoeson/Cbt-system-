@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enter Token</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      border-radius: 6px;
+      width: 300px;
+      border: none;
+      background-color: #1e1e1e;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    .loader {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Enter Your Token</h2>
+
+  <input type="text" id="tokenInput" placeholder="Enter your token (e.g., CBT-123456)">
+  <button onclick="validateToken()">Validate Token</button>
+  <div class="error" id="errorMsg"></div>
+  <div class="loader" id="loader" style="display: none;">Validating...</div>
+
+  <script>
+    async function validateToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+      const loader = document.getElementById("loader");
+
+      errorMsg.textContent = "";
+      loader.style.display = "block";
+
+      if (!token) {
+        errorMsg.textContent = "Please enter a token.";
+        loader.style.display = "none";
+        return;
+      }
+
+      try {
+        const response = await fetch(`https://cbt-token-purchase.onrender.com/api/tokens/validate/${token}`);
+        const data = await response.json();
+
+        if (data.valid) {
+          localStorage.setItem("validToken", token);
+          window.location.href = "https://cbt-system-vert.vercel.app/student-register.html";
+        } else {
+          errorMsg.textContent = data.message || "Invalid or already used token.";
+        }
+      } catch (err) {
+        errorMsg.textContent = "Network or server error.";
+        console.error(err);
+      } finally {
+        loader.style.display = "none";
+      }
+    }
+  </script>
+
+</body>
+</html>
