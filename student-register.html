@@ -1,93 +1,82 @@
+<!-- student-register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Student Registration</title>
   <style>
     body {
-      background-color: #1c1c1c;
-      color: #f0f0f0;
+      background-color: #000;
+      color: #fff;
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      min-height: 100vh;
     }
     form {
-      background-color: #2b2b2b;
-      padding: 30px;
+      background: #111;
+      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #000;
+      box-shadow: 0 0 10px #0f0;
       width: 100%;
       max-width: 400px;
     }
     input, button {
-      display: block;
       width: 100%;
-      margin-bottom: 15px;
       padding: 10px;
+      margin: 8px 0;
       border: none;
       border-radius: 5px;
     }
-    .password-container {
-      position: relative;
-    }
-    .toggle-password {
-      position: absolute;
-      top: 50%;
-      right: 10px;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: #aaa;
-      font-size: 14px;
-      user-select: none;
-    }
-    input[type="file"] {
-      padding: 5px;
-      color: white;
-    }
-    input[readonly] {
-      background-color: #444;
-      color: #ccc;
+    input {
+      background: #222;
+      color: #fff;
     }
     button {
-      background-color: #00aaff;
+      background-color: green;
       color: white;
-      font-weight: bold;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #0077aa;
+    .toggle-password {
+      cursor: pointer;
+      font-size: 14px;
+      text-align: right;
+      color: #0f0;
     }
     #responseMsg {
       margin-top: 10px;
+      font-weight: bold;
       text-align: center;
     }
   </style>
 </head>
 <body>
   <form id="registerForm" enctype="multipart/form-data">
-    <h2>Student Registration</h2>
+    <input type="hidden" id="tokenInput" name="token">
 
-    <!-- Visible, readonly token input -->
-    <input type="text" name="token" id="tokenInput" readonly required />
+    <label>Full Name:</label>
+    <input type="text" name="name" required>
 
-    <input type="text" name="name" placeholder="Full Name" required />
-    <input type="text" name="matric" placeholder="Matric Number" required />
-    <input type="text" name="phone" placeholder="Phone Number" required />
-    <input type="email" name="email" placeholder="Email Address" required />
+    <label>Matric Number:</label>
+    <input type="text" name="matric" required>
 
-    <div class="password-container">
-      <input type="password" name="password" id="password" placeholder="Password" required />
-      <span class="toggle-password" onclick="togglePassword()">Show</span>
-    </div>
+    <label>Email:</label>
+    <input type="email" name="email" required>
+
+    <label>Phone Number:</label>
+    <input type="tel" name="phone" required>
+
+    <label>Password:</label>
+    <input type="password" name="password" id="password" required>
+    <div class="toggle-password" onclick="togglePassword()">Show</div>
 
     <label>Passport Photo:</label>
-    <input type="file" name="passport" accept="image/*" required />
+    <input type="file" name="passport" accept="image/*" required>
+
     <button type="submit">Register</button>
-    <p id="responseMsg"></p>
+
+    <div id="responseMsg"></div>
   </form>
 
   <script>
@@ -96,12 +85,11 @@
     const registerForm = document.getElementById("registerForm");
     const responseMsg = document.getElementById("responseMsg");
 
-    // Prefill token or redirect
     if (!token) {
       alert("No valid token found. Please validate your token first.");
       window.location.href = "token-validation.html";
     } else {
-      tokenInput.value = token;
+      if (tokenInput) tokenInput.value = token;
     }
 
     function togglePassword() {
@@ -147,6 +135,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, matric }),
         });
+
         const dupData = await dupCheck.json();
         if (!dupCheck.ok || dupData.exists) {
           responseMsg.textContent = dupData.message || "Matric or Email already exists.";
@@ -159,6 +148,7 @@
           method: "POST",
           body: formData,
         });
+
         const data = await res.json();
         responseMsg.textContent = data.message;
         responseMsg.style.color = res.ok ? "lightgreen" : "red";
@@ -169,9 +159,13 @@
             method: "PATCH",
           });
 
-          // 4. Cleanup
+          // 4. Cleanup and redirect
           localStorage.removeItem("validToken");
           registerForm.reset();
+          setTimeout(() => {
+            alert("Registration successful!");
+            window.location.href = "student-login.html";
+          }, 1500);
         }
 
       } catch (err) {
@@ -182,4 +176,4 @@
     });
   </script>
 </body>
-                          </html>
+</html>
