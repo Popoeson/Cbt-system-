@@ -37,6 +37,24 @@ const studentSchema = new mongoose.Schema({
   passport: String,
 });
 
+const tokenSchema = new mongoose.Schema({
+  studentName: String,
+  studentEmail: String,
+  amount: Number,
+  reference: String,
+  token: String,
+  status: {
+    type: String,
+    enum: ['pending', 'success', 'used'],
+    default: 'pending',
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Token = mongoose.model("Token", tokenSchema);
 const examSchema = new mongoose.Schema({
   course: String,
   courseCode: String,
