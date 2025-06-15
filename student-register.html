@@ -2,169 +2,130 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Registration</title>
   <style>
     body {
       background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
+      color: white;
+      font-family: sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
     }
+
     form {
-      background: #111;
+      background: #1a1a1a;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #0f0;
       width: 100%;
       max-width: 400px;
+      box-shadow: 0 0 10px green;
     }
+
     input, button {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      margin: 10px 0;
       border: none;
       border-radius: 5px;
+      font-size: 16px;
     }
-    input {
-      background: #222;
-      color: #fff;
+
+    input[readonly] {
+      background-color: #333;
+      color: #ccc;
     }
+
     button {
       background-color: green;
       color: white;
       cursor: pointer;
     }
-    .toggle-password {
-      cursor: pointer;
-      font-size: 14px;
-      text-align: right;
-      color: #0f0;
+
+    button:disabled {
+      background-color: gray;
+      cursor: not-allowed;
     }
-    #responseMsg {
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: center;
-    }
-    #spinner {
+
+    .spinner {
       display: none;
-      text-align: center;
       margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-
   <form id="registerForm">
-    <h2>Student Registration</h2>
-    <input type="text" name="name" placeholder="Full Name" required />
-    <input type="text" name="matric" id="matric" placeholder="Matric Number" required />
-    <input type="email" name="email" placeholder="Email Address" required />
-    <input type="tel" name="phone" placeholder="Phone Number" required />
-    <input type="password" name="password" id="password" placeholder="Password" required />
-    <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-    <span class="toggle-password" onclick="togglePassword()">Show</span>
-    <input type="file" name="passport" accept="image/*" required />
-    <input type="hidden" name="token" id="tokenInput" />
+    <h2 style="text-align:center">Student Registration</h2>
 
-    <button type="submit" id="submitBtn">Register</button>
-    <div id="spinner">⏳ Registering, please wait...</div>
-    <p id="responseMsg"></p>
+    <input type="text" id="token" name="token" readonly placeholder="Token" />
+
+    <input type="text" id="name" placeholder="Full Name" required />
+    <input type="text" id="matric" placeholder="Matric Number" required />
+    <input type="email" id="email" placeholder="Email Address" required />
+    <input type="tel" id="phone" placeholder="Phone Number" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+    
+    <input type="file" id="passport" accept="image/*" required />
+    
+    <button type="submit" id="registerBtn">Register</button>
+    <div class="spinner" id="spinner">Submitting...</div>
   </form>
 
   <script>
-    const token = localStorage.getItem("validToken");
-    const tokenInput = document.getElementById("tokenInput");
-    const registerForm = document.getElementById("registerForm");
-    const responseMsg = document.getElementById("responseMsg");
-    const submitBtn = document.getElementById("submitBtn");
-    const spinner = document.getElementById("spinner");
-
-    // Prefill token or redirect
-    if (!token) {
-      alert("No valid token found. Please validate your token first.");
-      window.location.href = "token-validation.html";
-    } else {
-      tokenInput.value = token;
-    }
-
-    function togglePassword() {
-      const passwordInput = document.getElementById("password");
-      const confirmInput = document.getElementById("confirmPassword");
-      const toggle = document.querySelector(".toggle-password");
-      const isVisible = passwordInput.type === "text";
-
-      passwordInput.type = isVisible ? "password" : "text";
-      confirmInput.type = isVisible ? "password" : "text";
-      toggle.textContent = isVisible ? "Show" : "Hide";
-    }
-
-    registerForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      if (!confirm("Are you sure you want to submit this registration?")) return;
-
-      const formData = new FormData(registerForm);
-      const rawMatric = formData.get("matric");
-      const email = formData.get("email");
-      const password = formData.get("password");
-      const confirmPassword = document.getElementById("confirmPassword").value;
-
-      if (!rawMatric) {
-        responseMsg.textContent = "Matric number is required.";
-        responseMsg.style.color = "red";
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("validToken");
+      if (!token) {
+        window.location.href = "token-validation.html";
         return;
       }
 
-      if (!email.includes("@") || !email.includes(".")) {
-        responseMsg.textContent = "Invalid email format.";
-        responseMsg.style.color = "red";
-        return;
-      }
+      document.getElementById("token").value = token;
 
-      if (password !== confirmPassword) {
-        responseMsg.textContent = "Passwords do not match.";
-        responseMsg.style.color = "red";
-        return;
-      }
+      const form = document.getElementById("registerForm");
+      const registerBtn = document.getElementById("registerBtn");
+      const spinner = document.getElementById("spinner");
 
-      // Department Detection Logic
-      const matric = rawMatric.toLowerCase();
-      let department = "Unknown";
-      if (matric.startsWith("s/")) department = "Science Laboratory Technology";
-      else if (matric.startsWith("cos/")) department = "Computer Science";
-      else if (matric.startsWith("coe/")) department = "Computer Engineering";
-      else if (matric.startsWith("b/")) department = "Business Administration";
-      else if (matric.startsWith("est/")) department = "Estate Management";
-      else if (matric.startsWith("e/")) department = "Electrical Engineering";
-      else if (matric.startsWith("m/")) department = "Mass Communication";
-      else if (matric.startsWith("a/")) department = "Accountancy";
-      else if (matric.startsWith("mlt/")) department = "Medical Laboratory Technology";
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      formData.append("department", department);
+        const name = document.getElementById("name").value.trim();
+        const matric = document.getElementById("matric").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+        const passport = document.getElementById("passport").files[0];
+        const token = document.getElementById("token").value;
 
-      try {
-        spinner.style.display = "block";
-        submitBtn.disabled = true;
-
-        // Check for duplicate
-        const dupCheck = await fetch("https://cbt-system.onrender.com/api/students/check-duplicate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, matric }),
-        });
-
-        const dupData = await dupCheck.json();
-        if (!dupCheck.ok || dupData.exists) {
-          responseMsg.textContent = dupData.message || "Matric or Email already exists.";
-          responseMsg.style.color = "red";
+        if (!email.includes("@") || !email.includes(".")) {
+          alert("Enter a valid email.");
           return;
         }
 
-        // Register student
-        const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
+        if (password !== confirmPassword) {
+          alert("Passwords do not match.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("matric", matric);
+        formData.append("email", email);
+        formData.append("phone", phone);
+        formData.append("password", password);
+        formData.append("passport", passport);
+        formData.append("token", token);
+
+        // Disable form and show spinner
+        registerBtn.disabled = true;
+        spinner.style.display = "block";
+
+        try {
+          const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
             method: "POST",
             body: formData
           });
@@ -186,6 +147,7 @@
           spinner.style.display = "none";
         }
       });
+    });
   </script>
 </body>
-      </html>
+  </html>
