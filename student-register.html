@@ -147,7 +147,8 @@
           const data = await res.json();
 
           if (!res.ok) {
-            throw new Error(data.message || "Registration failed");
+         alert(data.message);
+         throw new Error(data.message || "Registration failed");
           }
 
           alert("Registration successful!");
