@@ -21,6 +21,7 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
   useUnifiedTopology: true,
 }).then(async () => {
   console.log("Connected to MongoDB");
+  await Student.syncIndexes(); // call this after connecting to DB
   await startServer();
 }).catch(err => {
   console.error("MongoDB connection failed:", err);
