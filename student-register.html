@@ -79,7 +79,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("validToken");
       if (!token) {
-        window.location.href = "token-validation.html";
+        window.location.href = "https://cbt-system-vert.vercel.app/token-validate.html";
         return;
       }
 
