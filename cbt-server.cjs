@@ -131,52 +131,62 @@ function getDepartmentFromMatric(matric) {
   };
   return map[prefix] || "Unknown";
 }
-
-async function startServer() {
-  
-  // Student Registration
-  
-  app.post("/api/students/register", upload.single("passport"), async (req, res) => {
+// Register students
+app.post("/api/students/register", upload.single("passport"), async (req, res) => {
   const { name, matric, phone, email, password, token } = req.body;
   const passport = req.file ? req.file.filename : null;
   const department = getDepartmentFromMatric(matric);
 
+  // Ensure all required fields are provided
   if (!name || !matric || !phone || !email || !password || !passport || !token) {
     return res.status(400).json({ message: "All fields and token are required." });
   }
 
-  // Check if token exists and is valid
-  const validToken = await Token.findOne({ token, status: 'success' });
+  try {
+    // 1. Check if token exists and is valid
+    const validToken = await Token.findOne({ token, status: 'success' });
 
-  if (!validToken) {
-    return res.status(400).json({ message: "Invalid or already used token." });
+    if (!validToken) {
+      return res.status(400).json({ message: "Invalid or already used token." });
+    }
+
+    // 2. Check for existing student by matric or email
+    const existingStudent = await Student.findOne({
+      $or: [{ matric }, { email }]
+    });
+
+    if (existingStudent) {
+      return res.status(409).json({
+        message:
+          existingStudent.matric === matric
+            ? "A student with this matric number already exists."
+            : "A student with this email already exists."
+      });
+    }
+
+    // 3. Save new student
+    const newStudent = new Student({
+      name,
+      matric,
+      department,
+      phone,
+      email,
+      password,
+      passport
+    });
+
+    await newStudent.save();
+
+    // 4. Mark token as used
+    validToken.status = 'used';
+    await validToken.save();
+
+    res.status(201).json({ message: "Student registered successfully." });
+
+  } catch (err) {
+    console.error("Error registering student:", err);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
-
-    // Check for duplicate student (matric or email)
-app.post("/api/students/check-duplicate", async (req, res) => {
-  const { matric, email } = req.body;
-
-  if (!matric || !email) {
-    return res.status(400).json({ message: "Matric and email are required." });
-  }
-
-  const existing = await Student.findOne({ $or: [{ matric }, { email }] });
-  if (existing) {
-    return res.status(200).json({ exists: true, message: "Student with this matric or email already exists." });
-  }
-
-  res.json({ exists: false });
-});
-    
-  // Save student
-  const student = new Student({ name, matric, department, phone, email, password, passport });
-  await student.save();
-
-  // Mark token as used
-  validToken.status = 'used';
-  await validToken.save();
-
-  res.json({ message: "Student registered successfully.", student });
 });
 
   // Student Login
