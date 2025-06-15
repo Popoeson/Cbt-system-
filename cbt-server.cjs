@@ -29,12 +29,20 @@ mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?ret
 // Mongoose Schemas
 const studentSchema = new mongoose.Schema({
   name: String,
-  matric: String,
+  matric: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   department: String,
   phone: String,
-  email: String,
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   password: String,
-  passport: String,
+  passport: String
 });
 
 const tokenSchema = new mongoose.Schema({
