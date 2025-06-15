@@ -165,32 +165,27 @@
 
         // Register student
         const res = await fetch("https://cbt-system.onrender.com/api/students/register", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await res.json();
-        responseMsg.textContent = data.message;
-        responseMsg.style.color = res.ok ? "lightgreen" : "red";
-
-        if (res.ok) {
-          await fetch(`https://cbt-token-purchase.onrender.com/api/tokens/mark-used/${token}`, {
-            method: "PATCH",
+            method: "POST",
+            body: formData
           });
 
-          localStorage.removeItem("validToken");
-          registerForm.reset();
-        }
+          const data = await res.json();
 
-      } catch (err) {
-        console.error(err);
-        responseMsg.textContent = "Something went wrong. Please try again.";
-        responseMsg.style.color = "red";
-      } finally {
-        spinner.style.display = "none";
-        submitBtn.disabled = false;
-      }
-    });
+          if (!res.ok) {
+            throw new Error(data.message || "Registration failed");
+          }
+
+          alert("Registration successful!");
+          localStorage.removeItem("validToken");
+          window.location.href = "student-login.html"; // Or any other page
+        } catch (err) {
+          console.error(err);
+          alert("Something went wrong. Please try again.");
+        } finally {
+          registerBtn.disabled = false;
+          spinner.style.display = "none";
+        }
+      });
   </script>
 </body>
       </html>
