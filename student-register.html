@@ -16,12 +16,12 @@
     }
 
     form {
-      background: #1a1a1a;
+      background: #111;
       padding: 20px;
       border-radius: 10px;
+      box-shadow: 0 0 10px #0f0;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 0 10px green;
     }
 
     input, button {
@@ -54,6 +54,12 @@
       margin-top: 10px;
       text-align: center;
     }
+    .toggle-password {
+      cursor: pointer;
+      font-size: 14px;
+      text-align: right;
+      color: #0f0;
+    }
   </style>
 </head>
 <body>
@@ -68,14 +74,22 @@
     <input type="tel" id="phone" placeholder="Phone Number" required />
     <input type="password" id="password" placeholder="Password" required />
     <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-    
+    <span class="toggle-password" onclick="togglePassword(this)">Show</span>
     <input type="file" id="passport" accept="image/*" required />
     
     <button type="submit" id="registerBtn">Register</button>
-    <div class="spinner" id="spinner">Submitting...</div>
+    <div class="spinner" id="spinner">⏳ Registering, please wait...</div>
   </form>
 
   <script>
+    
+    function togglePassword(span) {
+    const pwd = document.getElementById("password");
+    const confirm = document.getElementById("confirmPassword");
+    const isPassword = pwd.type === "password";
+    pwd.type = confirm.type = isPassword ? "text" : "password";
+    span.textContent = isPassword ? "Hide" : "Show";
+    }
     document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("validToken");
       if (!token) {
