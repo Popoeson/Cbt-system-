@@ -41,7 +41,6 @@ const studentSchema = new mongoose.Schema({
   enum: ['ND1','ND2','HND1','HND2'],
   required: true
   },
-  level: string,
   phone: String,
   email: {
     type: String,
