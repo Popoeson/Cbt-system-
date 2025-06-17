@@ -125,41 +125,67 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Department mapping
-function getDepartmentFromMatric(matric) {
-  const prefix = matric.split("/")[0];
-  const map = {
-    "S": "Science Laboratory Technology",
-    "Cos": "Computer Science",
-    "Coe": "Computer Engineering",
-    "B": "Business Administration",
-    "Est": "Estate Management",
-    "E": "Electrical Engineering",
-    "M": "Mass Communication",
-    "A": "Accountancy",
-    "Mlt": "Medical Laboratory Technology"
-  };
-  return map[prefix] || "Unknown";
-}
-// Register students
-app.post("/api/students/register", upload.single("passport"), async (req, res) => {
+function getDepartmentAndLevelFromMatric(matric) {
+  if (matric.startsWith("HND/")) {
+    // HND student format: HND/23/01/001
+    const parts = matric.split("/");
+    const deptCode = parts[2]; // e.g., "01"
+
+    const hndMap = {
+      "01": "Accountancy",
+      "02": "Biochemistry",
+      "03": "Business Administration",
+      "04": "Computer Engineering",
+      "05": "Computer Science",
+      "06": "Electrical Engineering",
+      "07": "Mass Communication",
+      "08": "Microbiology"
+    };
+
+    return {
+      department: hndMap[deptCode] || "Unknown",
+      level: "HND"
+    };
+
+  } else {
+    // ND student format: e.g., Cos/023456
+    const prefix = matric.split("/")[0];
+    const ndMap = {
+      "S": "Science Laboratory Technology",
+      "Cos": "Computer Science",
+      "Coe": "Computer Engineering",
+      "B": "Business Administration",
+      "Est": "Estate Management",
+      "E": "Electrical Engineering",
+      "M": "Mass Communication",
+      "A": "Accountancy",
+      "Mlt": "Medical Laboratory Technology"
+    };
+
+    return {
+      department: ndMap[prefix] || "Unknown",
+      level: "ND"
+    };
+  }
+      }
+  //Student Registration 
+  app.post("/api/students/register", upload.single("passport"), async (req, res) => {
   const { name, matric, phone, email, password, token } = req.body;
   const passport = req.file ? req.file.filename : null;
-  const department = getDepartmentFromMatric(matric);
 
-  // Ensure all required fields are provided
   if (!name || !matric || !phone || !email || !password || !passport || !token) {
     return res.status(400).json({ message: "All fields and token are required." });
   }
 
   try {
-    // 1. Check if token exists and is valid
+    // Check token validity
     const validToken = await Token.findOne({ token, status: 'success' });
 
     if (!validToken) {
       return res.status(400).json({ message: "Invalid or already used token." });
     }
 
-    // 2. Check for existing student by matric or email
+    // Check for duplicates
     const existingStudent = await Student.findOne({
       $or: [{ matric }, { email }]
     });
@@ -173,11 +199,15 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
       });
     }
 
-    // 3. Save new student
+    // Detect department and level
+    const { department, level } = getDepartmentAndLevelFromMatric(matric);
+
+    // Save student
     const newStudent = new Student({
       name,
       matric,
       department,
+      level, // <-- save the level too
       phone,
       email,
       password,
@@ -186,7 +216,7 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
 
     await newStudent.save();
 
-    // 4. Mark token as used
+    // Mark token as used
     validToken.status = 'used';
     await validToken.save();
 
@@ -197,7 +227,6 @@ app.post("/api/students/register", upload.single("passport"), async (req, res) =
     res.status(500).json({ message: "Server error. Please try again." });
   }
 });
-
   // Student Login
   app.post("/api/students/login", async (req, res) => {
     const { matric, password } = req.body;
