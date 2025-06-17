@@ -36,6 +36,11 @@ const studentSchema = new mongoose.Schema({
     unique: true,
   },
   department: String,
+  level: {
+  type: String,
+  enum: ['ND', 'HND'],
+  required: true
+  },
   phone: String,
   email: {
     type: String,
