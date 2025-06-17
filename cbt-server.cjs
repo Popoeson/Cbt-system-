@@ -488,4 +488,3 @@ function getDepartmentAndLevelFromMatric(matric) {
   app.listen(PORT, () => {
     console.log(`CBT server running at http://localhost:${PORT}`);
   });
-    }
