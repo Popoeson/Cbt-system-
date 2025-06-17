@@ -38,9 +38,10 @@ const studentSchema = new mongoose.Schema({
   department: String,
   level: {
   type: String,
-  enum: ['ND', 'HND'],
+  enum: ['ND1','ND2','HND1','HND2'],
   required: true
   },
+  level: string,
   phone: String,
   email: {
     type: String,
@@ -175,10 +176,10 @@ function getDepartmentAndLevelFromMatric(matric) {
       }
   //Student Registration 
   app.post("/api/students/register", upload.single("passport"), async (req, res) => {
-  const { name, matric, phone, email, password, token } = req.body;
+  const { name, matric, phone, email, password, token, level } = req.body;
   const passport = req.file ? req.file.filename : null;
 
-  if (!name || !matric || !phone || !email || !password || !passport || !token) {
+  if (!name || !matric || !phone || !email || !password || !passport || !token || !level) {
     return res.status(400).json({ message: "All fields and token are required." });
   }
 
