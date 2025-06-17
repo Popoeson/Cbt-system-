@@ -24,13 +24,18 @@
       max-width: 400px;
     }
 
-    input, button {
+    input, select, button {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
       border: none;
       border-radius: 5px;
       font-size: 16px;
+    }
+
+    select {
+      background-color: #222;
+      color: white;
     }
 
     input[readonly] {
@@ -54,6 +59,7 @@
       margin-top: 10px;
       text-align: center;
     }
+
     .toggle-password {
       cursor: pointer;
       font-size: 14px;
@@ -70,26 +76,35 @@
 
     <input type="text" id="name" placeholder="Full Name" required />
     <input type="text" id="matric" placeholder="Matric Number" required />
+
+    <select id="level" required>
+      <option value="">-- Select Level --</option>
+      <option value="ND1">ND1</option>
+      <option value="ND2">ND2</option>
+      <option value="HND1">HND1</option>
+      <option value="HND2">HND2</option>
+    </select>
+
     <input type="email" id="email" placeholder="Email Address" required />
     <input type="tel" id="phone" placeholder="Phone Number" required />
     <input type="password" id="password" placeholder="Password" required />
     <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
     <span class="toggle-password" onclick="togglePassword(this)">Show</span>
     <input type="file" id="passport" accept="image/*" required />
-    
+
     <button type="submit" id="registerBtn">Register</button>
     <div class="spinner" id="spinner">⏳ Registering, please wait...</div>
   </form>
 
   <script>
-    
     function togglePassword(span) {
-    const pwd = document.getElementById("password");
-    const confirm = document.getElementById("confirmPassword");
-    const isPassword = pwd.type === "password";
-    pwd.type = confirm.type = isPassword ? "text" : "password";
-    span.textContent = isPassword ? "Hide" : "Show";
+      const pwd = document.getElementById("password");
+      const confirm = document.getElementById("confirmPassword");
+      const isPassword = pwd.type === "password";
+      pwd.type = confirm.type = isPassword ? "text" : "password";
+      span.textContent = isPassword ? "Hide" : "Show";
     }
+
     document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("validToken");
       if (!token) {
@@ -108,6 +123,7 @@
 
         const name = document.getElementById("name").value.trim();
         const matric = document.getElementById("matric").value.trim();
+        const level = document.getElementById("level").value;
         const email = document.getElementById("email").value.trim();
         const phone = document.getElementById("phone").value.trim();
         const password = document.getElementById("password").value;
@@ -120,6 +136,11 @@
           return;
         }
 
+        if (!level) {
+          alert("Please select your level.");
+          return;
+        }
+
         if (password !== confirmPassword) {
           alert("Passwords do not match.");
           return;
@@ -128,13 +149,13 @@
         const formData = new FormData();
         formData.append("name", name);
         formData.append("matric", matric);
+        formData.append("level", level);
         formData.append("email", email);
         formData.append("phone", phone);
         formData.append("password", password);
         formData.append("passport", passport);
         formData.append("token", token);
 
-        // Disable form and show spinner
         registerBtn.disabled = true;
         spinner.style.display = "block";
 
@@ -147,13 +168,13 @@
           const data = await res.json();
 
           if (!res.ok) {
-         alert(data.message);
-         throw new Error(data.message || "Registration failed");
+            alert(data.message);
+            throw new Error(data.message || "Registration failed");
           }
 
           alert("Registration successful!");
           localStorage.removeItem("validToken");
-          window.location.href = "student-login.html"; // Or any other page
+          window.location.href = "student-login.html";
         } catch (err) {
           console.error(err);
           alert("Something went wrong. Please try again.");
@@ -165,4 +186,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
