@@ -227,8 +227,8 @@ function getDepartmentAndLevelFromMatric(matric) {
     res.status(201).json({ message: "Student registered successfully." });
 
   } catch (err) {
-    console.error("Error registering student:", err);
-    res.status(500).json({ message: "Server error. Please try again." });
+  console.error("Error registering student:", err);
+  res.status(500).json({ message: err.message || "Server error" });
   }
 });
   // Student Login
