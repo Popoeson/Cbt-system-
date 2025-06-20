@@ -98,6 +98,21 @@ const resultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+// AllowedGroup schema
+const allowedGroupSchema = new mongoose.Schema({
+  department: String,
+  level: {
+    type: String,
+    enum: ['ND1', 'ND2', 'HND1', 'HND2']
+  },
+  status: {
+    type: String,
+    enum: ['allowed', 'blocked'],
+    default: 'allowed'
+  }
+});
+
+const AllowedGroup = mongoose.model("AllowedGroup", allowedGroupSchema);
 // School Schema
 const schoolSchema = new mongoose.Schema({
   name: String,
@@ -231,18 +246,30 @@ function getDepartmentAndLevelFromMatric(matric) {
   res.status(500).json({ message: err.message || "Server error" });
   }
 });
-  // Student Login
-  app.post("/api/students/login", async (req, res) => {
-    const { matric, password } = req.body;
-    const student = await Student.findOne({ matric, password });
 
-    if (!student) {
-      return res.status(401).json({ message: "Invalid matric number or password." });
-    }
+// Student Login
+app.post("/api/students/login", async (req, res) => {
+  const { matric, password } = req.body;
+  const student = await Student.findOne({ matric, password });
 
-    studentSessions.add(matric);
-    res.json({ message: "Login successful", student });
+  if (!student) {
+    return res.status(401).json({ message: "Invalid matric number or password." });
+  }
+
+  // Check if this student's department and level is allowed
+  const isAllowed = await AllowedGroup.findOne({
+    department: student.department,
+    level: student.level,
+    status: 'allowed'
   });
+
+  if (!isAllowed) {
+    return res.status(403).json({ message: "Your department and level is currently restricted from accessing the exam." });
+  }
+
+  studentSessions.add(matric);
+  res.json({ message: "Login successful", student });
+});
 
   // Student Dashboard
   app.get("/api/students/dashboard", async (req, res) => {
@@ -387,6 +414,26 @@ function getDepartmentAndLevelFromMatric(matric) {
       res.status(500).json({ message: "Failed to submit exam." });
     }
   });
+
+// Set access for a group (allow or block)
+app.post("/api/admin/access-control", async (req, res) => {
+  const { department, level, status } = req.body;
+
+  if (!department || !level || !status) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  const existing = await AllowedGroup.findOne({ department, level });
+
+  if (existing) {
+    existing.status = status;
+    await existing.save();
+  } else {
+    await AllowedGroup.create({ department, level, status });
+  }
+
+  res.json({ message: `Access for ${department} ${level} set to ${status}.` });
+});
 
   // Get JSON results with student details
   app.get("/api/results", async (req, res) => {
