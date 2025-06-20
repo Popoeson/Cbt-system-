@@ -435,6 +435,16 @@ app.post("/api/admin/access-control", async (req, res) => {
   res.json({ message: `Access for ${department} ${level} set to ${status}.` });
 });
 
+// Fetch all department-level access rules
+app.get("/api/admin/access-groups", async (req, res) => {
+  try {
+    const rules = await AllowedGroup.find();
+    res.json(rules);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load access groups." });
+  }
+});
+
   // Get JSON results with student details
   app.get("/api/results", async (req, res) => {
     try {
