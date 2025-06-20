@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Access Control</title>
+  <style>
+    body {
+      background-color: #000;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    form {
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #0f0;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <form id="accessForm">
+    <h2 style="text-align:center">Access Control</h2>
+
+    <select id="department" required>
+      <option value="">Select Department</option>
+      <option>Accountancy</option>
+      <option>Biochemistry</option>
+      <option>Business Administration</option>
+      <option>Computer Engineering</option>
+      <option>Computer Science</option>
+      <option>Electrical Engineering</option>
+      <option>Mass Communication</option>
+      <option>Microbiology</option>
+      <option>Science Laboratory Technology</option>
+      <option>Estate Management</option>
+      <option>Medical Laboratory Technology</option>
+    </select>
+
+    <select id="level" required>
+      <option value="">Select Level</option>
+      <option value="ND1">ND1</option>
+      <option value="ND2">ND2</option>
+      <option value="HND1">HND1</option>
+      <option value="HND2">HND2</option>
+    </select>
+
+    <select id="status" required>
+      <option value="">Access Status</option>
+      <option value="allowed">Allow</option>
+      <option value="blocked">Block</option>
+    </select>
+
+    <button type="submit">Update Access</button>
+  </form>
+
+  <script>
+    document.getElementById("accessForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const department = document.getElementById("department").value;
+      const level = document.getElementById("level").value;
+      const status = document.getElementById("status").value;
+
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/admin/access-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ department, level, status })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        alert("Access updated: " + data.message);
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
