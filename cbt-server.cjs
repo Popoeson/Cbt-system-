@@ -204,7 +204,7 @@ function getDepartmentAndLevelFromMatric(matric) {
     }
 
     // Detect department and level
-    const { department, level } = getDepartmentAndLevelFromMatric(matric);
+    const { department } = getDepartmentAndLevelFromMatric(matric);
 
     // Save student
     const newStudent = new Student({
