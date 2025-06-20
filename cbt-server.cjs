@@ -393,40 +393,50 @@ app.get("/api/exams/:courseCode", async (req, res) => {
 
   // Submit Exam
   app.post("/api/exams/:courseCode/submit", async (req, res) => {
-    const { courseCode } = req.params;
-    const { studentMatric, answers } = req.body;
+  const { courseCode } = req.params;
+  const { studentMatric, answers } = req.body;
 
-    if (!studentMatric || !answers || typeof answers !== "object") {
-      return res.status(400).json({ message: "Invalid submission data." });
+  if (!studentMatric || !answers || typeof answers !== "object") {
+    return res.status(400).json({ message: "Invalid submission data." });
+  }
+
+  try {
+    // Check if student already submitted for this course
+    const alreadySubmitted = await Result.findOne({ studentMatric, courseCode });
+
+    if (alreadySubmitted) {
+      return res.status(409).json({ 
+        message: "You have already submitted this exam." 
+      });
     }
 
-    try {
-      const questions = await Question.find({ courseCode });
-      let score = 0;
-      questions.forEach((q) => {
-        if (answers[q._id] && answers[q._id] === q.correctAnswer) {
-          score++;
-        }
-      });
+    // Continue with scoring and saving
+    const questions = await Question.find({ courseCode });
+    let score = 0;
+    questions.forEach((q) => {
+      if (answers[q._id] && answers[q._id] === q.correctAnswer) {
+        score++;
+      }
+    });
 
-      const result = new Result({
-        studentMatric,
-        courseCode,
-        score,
-        total: questions.length,
-      });
+    const result = new Result({
+      studentMatric,
+      courseCode,
+      score,
+      total: questions.length,
+    });
 
-      await result.save();
+    await result.save();
 
-      res.json({
-        message: "Exam submitted successfully",
-        score,
-        total: questions.length,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to submit exam." });
-    }
-  });
+    res.json({
+      message: "Exam submitted successfully",
+      score,
+      total: questions.length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to submit exam." });
+  }
+});
 
 // Set access for a group (allow or block)
 app.post("/api/admin/access-control", async (req, res) => {
