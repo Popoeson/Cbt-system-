@@ -6,99 +6,128 @@
   <title>Access Control</title>
   <style>
     body {
-      background-color: #000;
+      background: #000;
       color: white;
       font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      padding: 40px;
+    }
+
+    h2 {
+      text-align: center;
     }
 
     form {
       background: #111;
       padding: 20px;
+      max-width: 500px;
+      margin: auto;
       border-radius: 10px;
       box-shadow: 0 0 10px #0f0;
-      width: 100%;
-      max-width: 400px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
     }
 
     select, button {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
       font-size: 16px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    select[multiple] {
+      height: 50px;
     }
 
     button {
-      background-color: green;
+      background: green;
       color: white;
       cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .success {
+      color: #0f0;
+      text-align: center;
+      margin-top: 15px;
     }
   </style>
 </head>
 <body>
+  <h2>Set Exam Access Control</h2>
   <form id="accessForm">
-    <h2 style="text-align:center">Access Control</h2>
-
-    <select id="department" multiple required>
-      <option value="">Select Department</option>
-      <option>Accountancy</option>
-      <option>Biochemistry</option>
-      <option>Business Administration</option>
-      <option>Computer Engineering</option>
-      <option>Computer Science</option>
-      <option>Electrical Engineering</option>
-      <option>Mass Communication</option>
-      <option>Microbiology</option>
-      <option>Science Laboratory Technology</option>
-      <option>Estate Management</option>
-      <option>Medical Laboratory Technology</option>
+    <label for="departments">Select Departments (Multi-Select)</label>
+    <select id="departments" multiple required>
+      <optgroup label="ND Departments">
+        <option value="Science Laboratory Technology">Science Laboratory Technology</option>
+        <option value="Computer Science">Computer Science</option>
+        <option value="Computer Engineering">Computer Engineering</option>
+        <option value="Business Administration">Business Administration</option>
+        <option value="Estate Management">Estate Management</option>
+        <option value="Electrical Engineering">Electrical Engineering</option>
+        <option value="Mass Communication">Mass Communication</option>
+        <option value="Accountancy">Accountancy</option>
+        <option value="Medical Laboratory Technology">Medical Laboratory Technology</option>
+      </optgroup>
+      <optgroup label="HND Departments">
+        <option value="Accountancy">Accountancy (HND)</option>
+        <option value="Biochemistry">Biochemistry</option>
+        <option value="Business Administration">Business Administration (HND)</option>
+        <option value="Computer Engineering">Computer Engineering (HND)</option>
+        <option value="Computer Science">Computer Science (HND)</option>
+        <option value="Electrical Engineering">Electrical Engineering (HND)</option>
+        <option value="Mass Communication">Mass Communication (HND)</option>
+        <option value="Microbiology">Microbiology</option>
+      </optgroup>
     </select>
 
-    <select id="level" multiple required>
-      <option value="">Select Level</option>
+    <label for="levels">Select Levels (Multi-Select)</label>
+    <select id="levels" multiple required>
       <option value="ND1">ND1</option>
       <option value="ND2">ND2</option>
       <option value="HND1">HND1</option>
       <option value="HND2">HND2</option>
     </select>
 
-    <select id="status" required>
-      <option value="">Access Status</option>
-      <option value="allowed">Allow</option>
-      <option value="blocked">Block</option>
-    </select>
-
-    <button type="submit">Update Access</button>
+    <button type="submit">Save Access Control</button>
+    <div class="success" id="statusMessage"></div>
   </form>
 
   <script>
     document.getElementById("accessForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const department = document.getElementById("department").value;
-      const level = document.getElementById("level").value;
-      const status = document.getElementById("status").value;
+      const selectedDepartments = Array.from(document.getElementById("departments").selectedOptions).map(o => o.value);
+      const selectedLevels = Array.from(document.getElementById("levels").selectedOptions).map(o => o.value);
+
+      const body = {
+        departments: selectedDepartments,
+        levels: selectedLevels
+      };
 
       try {
-        const res = await fetch("https://cbt-system.onrender.com/api/admin/access-control", {
+        const res = await fetch("https://cbt-system.onrender.com/api/access-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ department, level, status })
+          body: JSON.stringify(body)
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
 
-        alert("Access updated: " + data.message);
+        if (res.ok) {
+          document.getElementById("statusMessage").textContent = "Access control updated successfully.";
+        } else {
+          alert(data.message || "Failed to update access control.");
+        }
       } catch (err) {
-        alert("Error: " + err.message);
+        alert("Error: Could not connect to server.");
+        console.error(err);
       }
     });
   </script>
 </body>
-</html>
+        </html>
