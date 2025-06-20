@@ -205,17 +205,16 @@
         })
       })
       .then(res => res.json())
-      .then(data => {
-        alert("Exam submitted successfully!");
-        localStorage.removeItem("courseCode");
-        window.location.href = "student-login.html";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Submission failed. Try again.");
-        hasSubmitted = false;
-      });
-    }
+    .then(data => {
+  if (data.message?.includes("already submitted")) {
+    alert(data.message);
+    window.location.href = "student-login.html";
+  } else {
+    alert("Exam submitted successfully!");
+    localStorage.removeItem("courseCode");
+    window.location.href = "student-login.html";
+  }
+})
 
     document.getElementById("submit-btn").addEventListener("click", () => {
       if (hasUnansweredQuestions()) {
