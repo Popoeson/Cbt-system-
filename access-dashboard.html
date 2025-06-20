@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Access Control Dashboard</title>
+  <style>
+    body {
+      background-color: #000;
+      color: white;
+      font-family: sans-serif;
+      padding: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #111;
+      border: 1px solid #444;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      background-color: #222;
+    }
+
+    .status-allowed {
+      color: #0f0;
+      font-weight: bold;
+    }
+
+    .status-blocked {
+      color: red;
+      font-weight: bold;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .refresh {
+      background: green;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 20px auto;
+      display: block;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Exam Access Dashboard</h2>
+
+  <button class="refresh" onclick="loadAccess()">🔄 Refresh</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Department</th>
+        <th>Level</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="accessTableBody" class="center">
+      <tr><td colspan="3">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    async function loadAccess() {
+      const tbody = document.getElementById("accessTableBody");
+      tbody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/admin/access-groups");
+        const groups = await res.json();
+
+        if (!Array.isArray(groups) || groups.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='3'>No access control rules found.</td></tr>";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        groups.forEach(group => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${group.department}</td>
+            <td>${group.level}</td>
+            <td class="${group.status === 'allowed' ? 'status-allowed' : 'status-blocked'}">
+              ${group.status.toUpperCase()}
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Failed to fetch access groups:", err);
+        tbody.innerHTML = "<tr><td colspan='3'>Error loading data</td></tr>";
+      }
+    }
+
+    // Load initially
+    loadAccess();
+  </script>
+</body>
+</html>
