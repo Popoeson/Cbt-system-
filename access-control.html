@@ -40,7 +40,7 @@
     }
 
     select[multiple] {
-      height: 50px;
+      height: 100px;
     }
 
     button {
@@ -93,6 +93,12 @@
       <option value="HND2">HND2</option>
     </select>
 
+    <label for="status">Action</label>
+    <select id="status" required>
+      <option value="allowed">Allow</option>
+      <option value="blocked">Block</option>
+    </select>
+
     <button type="submit">Save Access Control</button>
     <div class="success" id="statusMessage"></div>
   </form>
@@ -101,33 +107,35 @@
     document.getElementById("accessForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const selectedDepartments = Array.from(document.getElementById("departments").selectedOptions).map(o => o.value);
-      const selectedLevels = Array.from(document.getElementById("levels").selectedOptions).map(o => o.value);
+      const departments = Array.from(document.getElementById("departments").selectedOptions).map(o => o.value.replace(/\s+HND/, ""));
+      const levels = Array.from(document.getElementById("levels").selectedOptions).map(o => o.value);
+      const status = document.getElementById("status").value;
 
-      const body = {
-        departments: selectedDepartments,
-        levels: selectedLevels
-      };
-
-      try {
-        const res = await fetch("https://cbt-system.onrender.com/api/access-control", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          document.getElementById("statusMessage").textContent = "Access control updated successfully.";
-        } else {
-          alert(data.message || "Failed to update access control.");
-        }
-      } catch (err) {
-        alert("Error: Could not connect to server.");
-        console.error(err);
+      if (departments.length === 0 || levels.length === 0) {
+        alert("Please select at least one department and one level.");
+        return;
       }
+
+      let successCount = 0;
+
+      for (const dept of departments) {
+        for (const level of levels) {
+          try {
+            const res = await fetch("https://cbt-system.onrender.com/api/admin/access-control", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ department: dept, level, status })
+            });
+
+            if (res.ok) successCount++;
+          } catch (err) {
+            console.error(`Failed to set access for ${dept} ${level}`, err);
+          }
+        }
+      }
+
+      document.getElementById("statusMessage").textContent = `${successCount} access control rules saved successfully.`;
     });
   </script>
 </body>
-        </html>
+</html>
