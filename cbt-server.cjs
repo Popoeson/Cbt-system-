@@ -367,16 +367,17 @@ app.post("/api/students/login", async (req, res) => {
     }
   });
 
-  // Load Questions for a Course
-  app.get("/api/exams/:courseCode/questions", async (req, res) => {
-    const { courseCode } = req.params;
-    try {
-      const questions = await Question.find({ courseCode });
-      res.json({ courseCode, questions });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to load questions." });
-    }
-  });
+// Load exam info  and duration
+app.get("/api/exams/:courseCode", async (req, res) => {
+  const { courseCode } = req.params;
+  try {
+    const exam = await Exam.findOne({ courseCode });
+    if (!exam) return res.status(404).json({ message: "Exam not found" });
+    res.json({ exam });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch exam settings" });
+  }
+});
 
   // Submit Exam
   app.post("/api/exams/:courseCode/submit", async (req, res) => {
