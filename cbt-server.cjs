@@ -584,8 +584,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-module.exports = router;
-
   // ===== School Registration =====
   app.post("/api/schools/register", upload.single("logo"), async (req, res) => {
     try {
