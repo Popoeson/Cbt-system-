@@ -19,13 +19,15 @@
       background-color: #2b2b2b;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #000;
+      box-shadow: 0 0 10px #0f0;
       width: 90%;
       max-width: 400px;
+      position: relative;
     }
     h2 {
       text-align: center;
       margin-bottom: 20px;
+      color: #0f0;
     }
     input, select, button {
       display: block;
@@ -37,23 +39,40 @@
       font-size: 16px;
     }
     button {
-      background-color: #00aaff;
+      background-color: #00cc66;
       color: white;
       font-weight: bold;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0077aa;
+      background-color: #00994d;
+    }
+    .spinner {
+      display: none;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #0f0;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
 <body>
   <form id="setExamForm">
     <h2>Set Exam Course</h2>
+    <div class="spinner" id="spinner"></div>
+
     <input type="text" id="course" placeholder="Course Title" required />
     <input type="text" id="courseCode" placeholder="Course Code" required />
     <input type="number" id="numQuestions" placeholder="Number of Questions" required min="1" />
-    
+
     <select id="department" required>
       <option value="">Select Department</option>
       <option value="Computer Science">Computer Science</option>
@@ -77,7 +96,7 @@
 
     <input type="number" id="duration" placeholder="Duration (minutes)" required min="1" />
 
-    <button type="submit">Set Exam Questions</button>
+    <button type="submit" id="submitBtn">Set Exam Questions</button>
   </form>
 
   <script>
@@ -86,14 +105,34 @@
     document.getElementById("setExamForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const course = document.getElementById("course").value.trim();
-      const courseCode = document.getElementById("courseCode").value.trim();
-      const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
-      const department = document.getElementById("department").value.trim();
-      const level = document.getElementById("level").value.trim();
-      const duration = parseInt(document.getElementById("duration").value.trim());
+      const course = document.getElementById("course");
+      const courseCode = document.getElementById("courseCode");
+      const numQuestions = document.getElementById("numQuestions");
+      const department = document.getElementById("department");
+      const level = document.getElementById("level");
+      const duration = document.getElementById("duration");
+      const spinner = document.getElementById("spinner");
+      const submitBtn = document.getElementById("submitBtn");
 
-      const examCourse = { course, courseCode, numQuestions, department, level, duration };
+      // Disable form
+      course.disabled = true;
+      courseCode.disabled = true;
+      numQuestions.disabled = true;
+      department.disabled = true;
+      level.disabled = true;
+      duration.disabled = true;
+      submitBtn.disabled = true;
+      spinner.style.display = "block";
+
+      const examCourse = {
+        course: course.value.trim(),
+        courseCode: courseCode.value.trim(),
+        numQuestions: parseInt(numQuestions.value.trim()),
+        department: department.value.trim(),
+        level: level.value.trim(),
+        duration: parseInt(duration.value.trim())
+      };
+
       localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
       try {
@@ -114,6 +153,16 @@
       } catch (err) {
         console.error(err);
         alert("Server error.");
+      } finally {
+        // Re-enable form in case of failure
+        spinner.style.display = "none";
+        course.disabled = false;
+        courseCode.disabled = false;
+        numQuestions.disabled = false;
+        department.disabled = false;
+        level.disabled = false;
+        duration.disabled = false;
+        submitBtn.disabled = false;
       }
     });
   </script>
