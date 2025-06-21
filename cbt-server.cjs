@@ -5,7 +5,6 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-writer");
-const router = express.Router();
 
 
 const app = express();
@@ -542,7 +541,7 @@ app.get("/api/admin/access-groups", async (req, res) => {
     }
   });
 // Admin Registration
-router.post('/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -566,7 +565,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Admin Login
-router.post('/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
