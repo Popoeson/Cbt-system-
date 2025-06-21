@@ -540,8 +540,9 @@ app.get("/api/admin/access-groups", async (req, res) => {
       res.status(500).json({ error: "Failed to generate result CSV" });
     }
   });
-// Admin Registration
-app.post('/register', async (req, res) => {
+
+// Admin Registration Route
+app.post('/api/admin/register', async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -564,8 +565,8 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Admin Login
-app.post('/login', async (req, res) => {
+// Admin Login Route
+app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
