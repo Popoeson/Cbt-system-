@@ -117,21 +117,14 @@ const allowedGroupSchema = new mongoose.Schema({
 
 const AllowedGroup = mongoose.model("AllowedGroup", allowedGroupSchema);
 
-// Admin Schema
+// Admin Schema 
 const adminSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true
-  }
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
 });
 
-module.exports = mongoose.model('Admin', adminSchema);
+const Admin = mongoose.models.Admin || mongoose.model("Admin", adminSchema);
+
 // School Schema
 const schoolSchema = new mongoose.Schema({
   name: String,
