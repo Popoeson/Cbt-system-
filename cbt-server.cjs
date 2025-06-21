@@ -5,6 +5,9 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-writer");
+const router = express.Router();
+const Admin = require('../models/Admin');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -546,24 +549,26 @@ app.get("/api/admin/access-groups", async (req, res) => {
       res.status(500).json({ error: "Failed to generate result CSV" });
     }
   });
-
 // Admin Registration
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const exists = await Admin.findOne({ username });
-    if (exists) {
-      return res.status(400).json({ message: 'Username already taken' });
+    if (!username || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newAdmin = new Admin({ username, password: hashedPassword });
+    const existingAdmin = await Admin.findOne({ username });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const newAdmin = new Admin({ username, password });
     await newAdmin.save();
 
     res.status(201).json({ message: 'Admin registered successfully' });
-  } catch (error) {
-    console.error('Registration error:', error);
+  } catch (err) {
+    console.error('Registration error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -574,12 +579,7 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     const admin = await Admin.findOne({ username });
-    if (!admin) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
+    if (!admin || admin.password !== password) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -587,11 +587,13 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       admin: { id: admin._id, username: admin.username }
     });
-      } catch (error) {
-    console.error('Login error:', error);
+  } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+module.exports = router;
 
   // ===== School Registration =====
   app.post("/api/schools/register", upload.single("logo"), async (req, res) => {
