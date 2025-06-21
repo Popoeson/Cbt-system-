@@ -23,6 +23,7 @@
       box-shadow: 0 0 10px #0f0;
       width: 90%;
       max-width: 400px;
+      position: relative;
     }
 
     h2 {
@@ -49,6 +50,36 @@
     button:hover {
       background-color: darkgreen;
     }
+
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #0f0;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 15px auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .back-link a {
+      color: #0f0;
+      text-decoration: none;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -56,12 +87,23 @@
     <h2>Admin Registration</h2>
     <input type="text" id="username" placeholder="Username" required />
     <input type="password" id="password" placeholder="Password" required />
-    <button type="submit">Register</button>
+    <button type="submit" id="submitBtn">Register</button>
+    <div class="spinner" id="spinner"></div>
+    <div class="back-link">
+      <a href="homepage.html">← Back to Home</a>
+    </div>
   </form>
 
   <script>
-    document.getElementById("adminRegisterForm").addEventListener("submit", async function (e) {
+    const form = document.getElementById("adminRegisterForm");
+    const spinner = document.getElementById("spinner");
+    const submitBtn = document.getElementById("submitBtn");
+
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
+      submitBtn.disabled = true;
+      spinner.style.display = "block";
+
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
 
@@ -83,6 +125,9 @@
       } catch (err) {
         console.error(err);
         alert("Server error.");
+      } finally {
+        submitBtn.disabled = false;
+        spinner.style.display = "none";
       }
     });
   </script>
