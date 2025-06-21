@@ -23,6 +23,7 @@
       box-shadow: 0 0 10px #0f0;
       width: 90%;
       max-width: 400px;
+      position: relative;
     }
 
     h2 {
@@ -49,21 +50,64 @@
     button:hover {
       background-color: darkgreen;
     }
+
+    .spinner {
+      display: none;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-left-color: #0f0;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .back-home {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+      color: #0f0;
+      text-decoration: none;
+    }
+
+    .back-home:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <form id="adminLoginForm">
     <h2>Admin Login</h2>
+    <div class="spinner" id="spinner"></div>
     <input type="text" id="username" placeholder="Username" required />
     <input type="password" id="password" placeholder="Password" required />
-    <button type="submit">Login</button>
+    <button type="submit" id="submitBtn">Login</button>
+    <a class="back-home" href="homepage.html">← Back to Home</a>
   </form>
 
   <script>
-    document.getElementById("adminLoginForm").addEventListener("submit", async function (e) {
+    const form = document.getElementById("adminLoginForm");
+    const spinner = document.getElementById("spinner");
+    const submitBtn = document.getElementById("submitBtn");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      // Show spinner and disable form
+      spinner.style.display = "block";
+      submitBtn.disabled = true;
+      usernameInput.disabled = true;
+      passwordInput.disabled = true;
 
       try {
         const res = await fetch("https://cbt-system.onrender.com/api/admin/login", {
@@ -84,6 +128,12 @@
       } catch (err) {
         console.error(err);
         alert("Server error.");
+      } finally {
+        // Hide spinner and re-enable form
+        spinner.style.display = "none";
+        submitBtn.disabled = false;
+        usernameInput.disabled = false;
+        passwordInput.disabled = false;
       }
     });
   </script>
