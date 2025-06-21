@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CBT Portal</title>
+  <style>
+    body {
+      background-color: #000;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #00ff00;
+      margin-bottom: 10px;
+    }
+
+    p.intro {
+      color: #ccc;
+      font-size: 1.1em;
+      margin-bottom: 40px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .buttons a {
+      background: #111;
+      color: white;
+      text-decoration: none;
+      padding: 15px 30px;
+      border: 1px solid #0f0;
+      border-radius: 8px;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+
+    .buttons a:hover {
+      background-color: #0f0;
+      color: black;
+    }
+
+    .rules {
+      background-color: #111;
+      border-left: 4px solid #0f0;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      text-align: left;
+      border-radius: 8px;
+    }
+
+    .rules h2 {
+      color: #0f0;
+      margin-bottom: 10px;
+    }
+
+    .rules ul {
+      padding-left: 20px;
+    }
+
+    .rules li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Welcome to the CBT Portal</h1>
+  <p class="intro">Select your role to continue</p>
+
+  <div class="buttons">
+    <a href="student-home.html">🎓 I'm a Student</a>
+    <a href="admin-login.html">🛠️ I'm an Admin</a>
+  </div>
+
+  <div class="rules">
+    <h2>📋 Examination Rules & Guidelines</h2>
+    <ul>
+      <li>Ensure you have a valid token before attempting registration.</li>
+      <li>Each student is allowed to take an exam only once. Duplicate attempts are blocked.</li>
+      <li>Once the exam starts, a countdown timer begins. You must submit before time runs out.</li>
+      <li>⚠️ <strong>Switching tabs or minimizing the browser/app will lead to automatic submission.</strong></li>
+      <li>Do not reload the page once the exam has started.</li>
+      <li>Make sure you have a stable internet connection.</li>
+    </ul>
+  </div>
+
+</body>
+</html>
