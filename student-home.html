@@ -1,0 +1,55 @@
+<!-- student-home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard</title>
+  <style>
+    body {
+      background-color: #000;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 60px;
+    }
+
+    h1 {
+      color: #0f0;
+    }
+
+    .link-box {
+      background: #111;
+      border: 1px solid #0f0;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 10px;
+      width: 250px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .link-box:hover {
+      background: #222;
+      transform: scale(1.05);
+    }
+
+    a {
+      color: white;
+      text-decoration: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome Student</h1>
+
+  <div class="link-box"><a href="buy-token.html">🎫 Buy Token</a></div>
+  <div class="link-box"><a href="validate-token.html">✅ Validate Token</a></div>
+  <div class="link-box"><a href="student-register.html">📝 Register</a></div>
+  <div class="link-box"><a href="student-login.html">🔐 Login</a></div>
+</body>
+</html>
