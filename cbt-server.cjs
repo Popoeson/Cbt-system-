@@ -113,6 +113,22 @@ const allowedGroupSchema = new mongoose.Schema({
 });
 
 const AllowedGroup = mongoose.model("AllowedGroup", allowedGroupSchema);
+
+// Admin Schema
+const adminSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true
+  }
+});
+
+module.exports = mongoose.model('Admin', adminSchema);
 // School Schema
 const schoolSchema = new mongoose.Schema({
   name: String,
@@ -530,6 +546,52 @@ app.get("/api/admin/access-groups", async (req, res) => {
       res.status(500).json({ error: "Failed to generate result CSV" });
     }
   });
+
+// Admin Registration
+router.post('/register', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const exists = await Admin.findOne({ username });
+    if (exists) {
+      return res.status(400).json({ message: 'Username already taken' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = new Admin({ username, password: hashedPassword });
+    await newAdmin.save();
+
+    res.status(201).json({ message: 'Admin registered successfully' });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin Login
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const admin = await Admin.findOne({ username });
+    if (!admin) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    res.json({
+      message: 'Login successful',
+      admin: { id: admin._id, username: admin.username }
+    });
+      } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
   // ===== School Registration =====
   app.post("/api/schools/register", upload.single("logo"), async (req, res) => {
