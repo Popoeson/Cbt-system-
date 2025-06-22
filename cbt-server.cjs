@@ -307,7 +307,8 @@ app.post("/api/students/login", async (req, res) => {
 });
 
 // Upload Scheduled Students via Excel (POST)
-app.post("/api/schedule/upload", upload.single("file"), async (req, res) => {
+app.post("/api/schedule/upload", scheduleUpload.single("file"), async (req, res) => {
+});
   try {
     const workbook = XLSX.read(req.file.buffer);
     const sheetName = workbook.SheetNames[0];
