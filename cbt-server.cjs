@@ -7,9 +7,6 @@ const path = require("path");
 const csv = require("csv-writer");
 const XLSX = require("xlsx");
 
-// MULTER CONFIG FOR EXCEL UPLOAD
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -172,6 +169,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
+
+// Schedule-specific Multer config
+const scheduleStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/schedules"), // <-- separate folder
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+const scheduleUpload = multer({ storage: scheduleStorage });
+
 
 // Department mapping
 function getDepartmentAndLevelFromMatric(matric) {
