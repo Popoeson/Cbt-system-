@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Session Control</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .card {
+      background-color: #111;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px green;
+      text-align: center;
+      width: 300px;
+    }
+
+    .card h2 {
+      color: #0f0;
+      margin-bottom: 20px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #555;
+      transition: 0.4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #0f0;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      background-color: green;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      background-color: darkgreen;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Exam Session Control</h2>
+    <label class="switch">
+      <input type="checkbox" id="toggleSwitch">
+      <span class="slider"></span>
+    </label>
+    <p id="status">Loading...</p>
+
+    <button class="back-btn" onclick="window.location.href='admin-home.html'">Back to Home</button>
+  </div>
+
+  <script>
+    const BASE_URL = "https://cbt-system.onrender.com";
+
+    const toggleSwitch = document.getElementById("toggleSwitch");
+    const statusText = document.getElementById("status");
+
+    async function fetchSessionStatus() {
+      try {
+        const res = await fetch(`${BASE_URL}/api/schedule/session/status`);
+        const data = await res.json();
+        toggleSwitch.checked = data.active;
+        statusText.textContent = data.active ? "Session is ACTIVE" : "Session is INACTIVE";
+        statusText.style.color = data.active ? "lime" : "orange";
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = "Error loading session status";
+        statusText.style.color = "red";
+      }
+    }
+
+    toggleSwitch.addEventListener("change", async function () {
+      const active = toggleSwitch.checked;
+      try {
+        const res = await fetch(`${BASE_URL}/api/schedule/session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active })
+        });
+
+        const data = await res.json();
+        statusText.textContent = active ? "Session is ACTIVE" : "Session is INACTIVE";
+        statusText.style.color = active ? "lime" : "orange";
+        alert(data.message);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to update session");
+        fetchSessionStatus(); // reset toggle
+      }
+    });
+
+    // On load
+    fetchSessionStatus();
+  </script>
+</body>
+</html>
