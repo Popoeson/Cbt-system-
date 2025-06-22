@@ -5,7 +5,11 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-writer");
+const XLSX = require("xlsx");
 
+// MULTER CONFIG FOR EXCEL UPLOAD
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -130,6 +134,22 @@ const schoolSchema = new mongoose.Schema({
   email: String,
   logo: String,
 });
+
+
+// Scheduled Student Schema
+const scheduledSchema = new mongoose.Schema({
+  name: String,
+  department: String,
+  level: String,
+  matric: { type: String, unique: true }
+});
+const ScheduledStudent = mongoose.models.ScheduledStudent || mongoose.model("ScheduledStudent", scheduledSchema);
+
+// Session Schema (only one doc exists to toggle active status)
+const sessionSchema = new mongoose.Schema({
+  sessionActive: { type: Boolean, default: false }
+});
+const SessionControl = mongoose.models.SessionControl || mongoose.model("SessionControl", sessionSchema);
 
 const Student = mongoose.model("Student", studentSchema);
 const Exam = mongoose.model("Exam", examSchema);
@@ -279,6 +299,85 @@ app.post("/api/students/login", async (req, res) => {
 
   studentSessions.add(matric);
   res.json({ message: "Login successful", student });
+});
+
+// Upload Scheduled Students via Excel (POST)
+app.post("/api/schedule/upload", upload.single("file"), async (req, res) => {
+  try {
+    const workbook = XLSX.read(req.file.buffer);
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const bulkOps = data.map((row) => ({
+      updateOne: {
+        filter: { matric: row.matric },
+        update: {
+          name: row.name,
+          department: row.department,
+          level: row.level,
+          matric: row.matric
+        },
+        upsert: true
+      }
+    }));
+
+    await ScheduledStudent.bulkWrite(bulkOps);
+    res.json({ message: "Scheduled students uploaded successfully" });
+  } catch (err) {
+    console.error("Excel Upload Error:", err);
+    res.status(500).json({ message: "Failed to upload students" });
+  }
+});
+
+// Start or Stop Exam Session (POST)
+app.post("/api/schedule/session", async (req, res) => {
+  const { active } = req.body;
+
+  try {
+    let session = await SessionControl.findOne();
+    if (!session) session = new SessionControl();
+    session.sessionActive = !!active;
+    await session.save();
+
+    res.json({ message: `Session is now ${active ? "ACTIVE" : "INACTIVE"}` });
+  } catch (err) {
+    console.error("Session Toggle Error:", err);
+    res.status(500).json({ message: "Failed to update session status" });
+  }
+});
+
+//  Check Session Status (GET)
+app.get("/api/schedule/session/status", async (req, res) => {
+  try {
+    const session = await SessionControl.findOne();
+    res.json({ active: session?.sessionActive || false });
+  } catch (err) {
+    console.error("Session Status Error:", err);
+    res.status(500).json({ message: "Could not fetch session status" });
+  }
+});
+
+//  Check if Student is Allowed to Take Exam (POST)
+app.post("/api/schedule/check", async (req, res) => {
+  const { matric } = req.body;
+
+  try {
+    const session = await SessionControl.findOne();
+    const student = await ScheduledStudent.findOne({ matric });
+
+    if (!session || !session.sessionActive) {
+      return res.status(403).json({ message: "Exam session is not active" });
+    }
+
+    if (!student) {
+      return res.status(403).json({ message: "You are not scheduled for this exam" });
+    }
+
+    res.json({ message: "You are cleared to proceed", student });
+  } catch (err) {
+    console.error("Schedule Check Error:", err);
+    res.status(500).json({ message: "Failed to verify student" });
+  }
 });
 
   // Student Dashboard
