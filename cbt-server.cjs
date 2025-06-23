@@ -13,11 +13,11 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 const allowedOrigins = [
-  "https://cbt-system-vert.vercel.app", // Vercel frontend
-  "http://localhost:3000"               // Optional for local development
+  "https://cbt-system-vert.vercel.app",
+  "http://localhost:3000"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -26,10 +26,10 @@ app.use(cors({
     }
   },
   credentials: true,
-}));
-app.use(express.json());
-app.use(express.static("public"));
-app.use("/uploads", express.static("uploads"));
+};
+
+app.use(cors(corsOptions));         // Enable for normal requests
+app.options("*", cors(corsOptions)); // Enable preflight (important for FormData uploads)
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?retryWrites=true&w=majority&appName=Cbt", {
