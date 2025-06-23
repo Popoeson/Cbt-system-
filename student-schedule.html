@@ -56,55 +56,42 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-    const uploadForm = document.getElementById("uploadForm");
-    const statusDiv = document.getElementById("status");
+  const uploadForm = document.getElementById("uploadForm");
+  const statusDiv = document.getElementById("status");
 
-    uploadForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  uploadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const fileInput = document.getElementById("excelFile");
-      const file = fileInput.files[0];
-      if (!file) {
-        statusDiv.textContent = "Please select an Excel file.";
-        return;
+    const fileInput = document.getElementById("excelFile");
+    const file = fileInput.files[0];
+    if (!file) {
+      statusDiv.textContent = "Please select an Excel file.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("https://cbt-system.onrender.com/api/schedule/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        statusDiv.style.color = "lightgreen";
+        statusDiv.textContent = result.message || "Students scheduled successfully!";
+      } else {
+        statusDiv.style.color = "red";
+        statusDiv.textContent = result.message || "Upload failed.";
       }
-
-      const reader = new FileReader();
-      reader.onload = async function (event) {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet);
-
-        if (json.length === 0) {
-          statusDiv.textContent = "No records found in Excel file.";
-          return;
-        }
-
-        try {
-          const res = await fetch("https://cbt-system.onrender.com/api/schedule/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ students: json })
-          });
-
-          const result = await res.json();
-          if (res.ok) {
-            statusDiv.style.color = "lightgreen";
-            statusDiv.textContent = result.message || "Students scheduled successfully!";
-          } else {
-            statusDiv.style.color = "red";
-            statusDiv.textContent = result.message || "Upload failed.";
-          }
-        } catch (err) {
-          console.error(err);
-          statusDiv.style.color = "red";
-          statusDiv.textContent = "Server error. Try again.";
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
+    } catch (err) {
+      console.error(err);
+      statusDiv.style.color = "red";
+      statusDiv.textContent = "Server error. Try again.";
+    }
+  });
   </script>
 </body>
 </html>
