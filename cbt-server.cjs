@@ -28,8 +28,9 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(cors(corsOptions));         // Enable for normal requests
-app.options("*", cors(corsOptions)); // Enable preflight (important for FormData uploads)
+app.use(cors(corsOptions));         // For all routes
+app.options("*", cors(corsOptions)); // Preflight for general use
+
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
@@ -325,7 +326,12 @@ app.post("/api/students/login", async (req, res) => {
 });
 
 // Upload Scheduled Students via Excel (POST)
-app.post("/api/schedule/upload", scheduleUpload.single("file"), async (req, res) => {
+
+// Allow preflight for this specific route
+app.options("/api/schedule/upload", cors(corsOptions));
+
+// Excel Upload Route
+app.post("/api/schedule/upload", cors(corsOptions), scheduleUpload.single("file"), async (req, res) => {
   try {
     const workbook = XLSX.readFile(req.file.path);  // use readFile instead of read
     const sheetName = workbook.SheetNames[0];
