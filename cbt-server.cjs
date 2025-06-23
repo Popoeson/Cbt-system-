@@ -30,6 +30,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));         // Enable for normal requests
 app.options("*", cors(corsOptions)); // Enable preflight (important for FormData uploads)
+app.use(express.json());
+app.use(express.static("public"));
+app.use("/uploads", express.static("uploads"));
+
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://CbtDatabase:CbtData@cbt.wmzjxzk.mongodb.net/?retryWrites=true&w=majority&appName=Cbt", {
