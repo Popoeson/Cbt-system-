@@ -471,6 +471,43 @@ app.post("/api/schedule/check", async (req, res) => {
     }
   });
 
+// Download registered students as CSV
+app.get("/api/students/download", async (req, res) => {
+  try {
+    const students = await Student.find();
+
+    const records = students.map(student => ({
+      Name: student.name,
+      Matric: student.matric,
+      Department: student.department,
+      Level: student.level,
+      Phone: student.phone,
+      Email: student.email
+    }));
+
+    const filePath = path.join(__dirname, "students.csv");
+    const writer = csv.createObjectCsvWriter({
+      path: filePath,
+      header: [
+        { id: "Name", title: "Name" },
+        { id: "Matric", title: "Matric" },
+        { id: "Department", title: "Department" },
+        { id: "Level", title: "Level" },
+        { id: "Phone", title: "Phone" },
+        { id: "Email", title: "Email" },
+      ],
+    });
+
+    await writer.writeRecords(records);
+
+    res.download(filePath, "students.csv", (err) => {
+      if (!err) fs.unlinkSync(filePath);
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate student CSV" });
+  }
+});
+
   // Create Exam
   app.post("/api/exams", async (req, res) => {
     const { course, courseCode, department, level, duration, numQuestions } = req.body;
