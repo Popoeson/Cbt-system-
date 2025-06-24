@@ -371,6 +371,30 @@ app.post("/api/schedule/upload", cors(corsOptions), scheduleUpload.single("file"
   }
 });
 
+// Get list of scheduled students
+app.get("/api/schedule/list", async (req, res) => {
+  try {
+    const ScheduledStudent = mongoose.model("ScheduledStudent");
+    const students = await ScheduledStudent.find();
+    res.json(students);
+  } catch (err) {
+    console.error("Failed to fetch scheduled list:", err);
+    res.status(500).json({ message: "Error fetching schedule list" });
+  }
+});
+
+// Clear all scheduled students
+app.delete("/api/schedule/clear", async (req, res) => {
+  try {
+    const ScheduledStudent = mongoose.model("ScheduledStudent");
+    await ScheduledStudent.deleteMany({});
+    res.json({ message: "Scheduled list cleared successfully." });
+  } catch (err) {
+    console.error("Error clearing scheduled list:", err);
+    res.status(500).json({ message: "Error clearing schedule list" });
+  }
+});
+
 // Start or Stop Exam Session (POST)
 app.post("/api/schedule/session", async (req, res) => {
   const { active } = req.body;
