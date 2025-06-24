@@ -186,19 +186,30 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Multer config
+// Ensure uploads folders exist
+const uploadDir = "uploads";
+const scheduleDir = "uploads/schedules";
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+if (!fs.existsSync(scheduleDir)) {
+  fs.mkdirSync(scheduleDir, { recursive: true });
+}
+
+// General student upload (passport, etc)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
 
-// Schedule-specific Multer config
+// Schedule Excel upload
 const scheduleStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/schedules"), // <-- separate folder
+  destination: (req, file, cb) => cb(null, scheduleDir),
   filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 const scheduleUpload = multer({ storage: scheduleStorage });
-
 
 // Department mapping
 function getDepartmentAndLevelFromMatric(matric) {
@@ -329,14 +340,12 @@ app.post("/api/students/login", async (req, res) => {
 });
 
 // Upload Scheduled Students via Excel (POST)
-
-// Allow preflight for this specific route
-app.options("/api/schedule/upload", cors(corsOptions));
-
 // Excel Upload Route
+app.options("/api/schedule/upload", cors(corsOptions)); // preflight
+
 app.post("/api/schedule/upload", cors(corsOptions), scheduleUpload.single("file"), async (req, res) => {
   try {
-    const workbook = XLSX.readFile(req.file.path);  // use readFile instead of read
+    const workbook = XLSX.readFile(req.file.path);
     const sheetName = workbook.SheetNames[0];
     const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
@@ -353,10 +362,12 @@ app.post("/api/schedule/upload", cors(corsOptions), scheduleUpload.single("file"
       }
     }));
 
+    const ScheduledStudent = mongoose.model("ScheduledStudent");
     await ScheduledStudent.bulkWrite(bulkOps);
+
     res.json({ message: "Scheduled students uploaded successfully" });
   } catch (err) {
-    console.error("Excel Upload Error:", err);
+    console.error("Excel Upload Error:", err.stack || err);
     res.status(500).json({ message: "Failed to upload students" });
   }
 });
