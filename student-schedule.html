@@ -44,6 +44,17 @@
       margin-top: 15px;
       text-align: center;
     }
+     .back-home {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+      color: #0f0;
+      text-decoration: none;
+    }
+
+    .back-home:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +63,7 @@
     <input type="file" id="excelFile" accept=".xlsx, .xls" required />
     <button type="submit">Upload Schedule</button>
     <div id="status"></div>
+     <a class="back-home" href="homepage.html">← Back to Home</a>
   </form>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
