@@ -317,8 +317,8 @@ function getDepartmentAndLevelFromMatric(matric) {
 // Student Login
 app.post("/api/students/login", async (req, res) => {
   const { matric, password } = req.body;
-  const student = await Student.findOne({ matric, password });
 
+  const student = await Student.findOne({ matric, password });
   if (!student) {
     return res.status(401).json({ message: "Invalid matric number or password." });
   }
@@ -334,9 +334,16 @@ app.post("/api/students/login", async (req, res) => {
     return res.status(403).json({ message: "Your department and level is currently restricted from accessing the exam." });
   }
 
+  // 🔒 Check if session is active
+  const session = await SessionControl.findOne();
+  if (!session || !session.sessionActive) {
+    return res.status(403).json({ message: "Exam session is not active. Please check back later." });
+  }
+
   studentSessions.add(matric);
   res.json({ message: "Login successful", student });
 });
+
 
 // Upload Scheduled Students via Excel (POST)
 // Excel Upload Route
