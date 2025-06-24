@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scheduled Students</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0f0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #222;
+      color: white;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #333;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: darkred;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    button:hover {
+      background-color: crimson;
+    }
+
+    #status {
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Scheduled Students List</h2>
+  <table id="scheduleTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Level</th>
+        <th>Matric</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <button onclick="clearSchedule()">Clear Scheduled List</button>
+  <div id="status"></div>
+
+  <script>
+    const API = "https://cbt-system.onrender.com";
+
+    async function loadScheduledStudents() {
+      try {
+        const res = await fetch(`${API}/api/schedule/list`);
+        const data = await res.json();
+        const tableBody = document.getElementById("tableBody");
+        tableBody.innerHTML = "";
+
+        if (data.length === 0) {
+          tableBody.innerHTML = "<tr><td colspan='4'>No scheduled students.</td></tr>";
+          return;
+        }
+
+        data.forEach((student) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${student.name}</td>
+            <td>${student.department}</td>
+            <td>${student.level}</td>
+            <td>${student.matric}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Failed to load schedule:", err);
+        document.getElementById("tableBody").innerHTML = "<tr><td colspan='4'>Failed to load data</td></tr>";
+      }
+    }
+
+    async function clearSchedule() {
+      if (!confirm("Are you sure you want to clear all scheduled students?")) return;
+
+      try {
+        const res = await fetch(`${API}/api/schedule/clear`, {
+          method: "DELETE",
+        });
+
+        const result = await res.json();
+        document.getElementById("status").textContent = result.message;
+        loadScheduledStudents(); // refresh
+      } catch (err) {
+        document.getElementById("status").textContent = "Failed to clear schedule";
+      }
+    }
+
+    loadScheduledStudents();
+  </script>
+</body>
+</html>
