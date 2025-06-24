@@ -33,10 +33,27 @@
       object-fit: cover;
       border-radius: 5px;
     }
+    .download-btn {
+      display: block;
+      margin: 20px auto;
+      background-color: green;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .download-btn:hover {
+      background-color: darkgreen;
+    }
   </style>
 </head>
 <body>
   <h1>CBT Student Dashboard</h1>
+
+  <!-- ✅ Download Button -->
+  <button class="download-btn" onclick="downloadCSV()">📥 Download Registered Students</button>
 
   <h2>Registered Students</h2>
   <table class="student-table" id="studentsTable">
@@ -90,7 +107,12 @@
       }
     }
 
+    // ✅ Download CSV Function
+    function downloadCSV() {
+      window.location.href = "https://cbt-system.onrender.com/api/students/download";
+    }
+
     fetchDashboardData();
   </script>
 </body>
-</html>
+  </html>
