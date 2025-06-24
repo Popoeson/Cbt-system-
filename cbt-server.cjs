@@ -187,7 +187,6 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer config
 // Ensure uploads folders exist
-const uploadDir = "uploads";
 const scheduleDir = "uploads/schedules";
 
 if (!fs.existsSync(uploadDir)) {
