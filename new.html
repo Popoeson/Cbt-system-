@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Slideshow Background */
+    .slideshow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .slideshow img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      animation: fade 30s infinite;
+    }
+
+    .slideshow img:nth-child(1) {
+      animation-delay: 0s;
+    }
+    .slideshow img:nth-child(2) {
+      animation-delay: 10s;
+    }
+    .slideshow img:nth-child(3) {
+      animation-delay: 20s;
+    }
+
+    @keyframes fade {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      30% { opacity: 1; }
+      40% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    .overlay {
+      position: relative;
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .student-table th, .student-table td {
+      border: 1px solid #aaa;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .student-table th {
+      background-color: #f2f2f2;
+      color: #333;
+    }
+
+    img.passport {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    .btn-download {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-download:hover {
+      background-color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Slideshow -->
+  <div class="slideshow">
+    <img src="https://source.unsplash.com/1600x900/?school" alt="School">
+    <img src="https://source.unsplash.com/1600x900/?students" alt="Students">
+    <img src="https://source.unsplash.com/1600x900/?books,classroom" alt="Books">
+  </div>
+
+  <!-- Main Overlay -->
+  <div class="overlay">
+    <h1>CBT Student Dashboard</h1>
+
+    <h2>Registered Students</h2>
+    <table class="student-table" id="studentsTable">
+      <thead>
+        <tr>
+          <th>Passport</th>
+          <th>Full Name</th>
+          <th>Matric No</th>
+          <th>Department</th>
+          <th>Phone</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="btn-download" onclick="downloadCSV()">Download Registered Students</button>
+
+    <h2>Active Login Sessions</h2>
+    <ul id="sessionList"></ul>
+  </div>
+
+  <script>
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/students/dashboard");
+        const data = await res.json();
+
+        const tableBody = document.querySelector("#studentsTable tbody");
+        tableBody.innerHTML = "";
+
+        data.students.forEach((student) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${student.passport}" alt="Passport" class="passport" /></td>
+            <td>${student.name}</td>
+            <td>${student.matric}</td>
+            <td>${student.department}</td>
+            <td>${student.phone}</td>
+            <td>${student.email}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        const sessionList = document.getElementById("sessionList");
+        sessionList.innerHTML = "";
+        data.sessions.forEach((session) => {
+          const li = document.createElement("li");
+          li.textContent = session;
+          sessionList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      }
+    }
+
+    function downloadCSV() {
+      window.location.href = "https://cbt-system.onrender.com/api/students/download";
+    }
+
+    fetchDashboardData();
+  </script>
+</body>
+</html>
