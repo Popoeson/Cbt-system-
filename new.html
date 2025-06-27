@@ -3,183 +3,284 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Dashboard</title>
+  <title>CBT Exam</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    /* Slideshow Background */
-    .slideshow {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .slideshow img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      animation: fade 30s infinite;
-    }
-
-    .slideshow img:nth-child(1) {
-      animation-delay: 0s;
-    }
-    .slideshow img:nth-child(2) {
-      animation-delay: 10s;
-    }
-    .slideshow img:nth-child(3) {
-      animation-delay: 20s;
-    }
-
-    @keyframes fade {
-      0% { opacity: 0; }
-      10% { opacity: 1; }
-      30% { opacity: 1; }
-      40% { opacity: 0; }
-      100% { opacity: 0; }
-    }
-
-    .overlay {
-      position: relative;
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 20px;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    h1, h2 {
-      text-align: center;
-      color: #333;
-    }
-
-    .student-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    .student-table th, .student-table td {
-      border: 1px solid #aaa;
-      padding: 10px;
-      text-align: left;
-    }
-
-    .student-table th {
-      background-color: #f2f2f2;
-      color: #333;
-    }
-
-    img.passport {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 5px;
-    }
-
-    ul {
-      padding-left: 20px;
-    }
-
-    .btn-download {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background-color: #2e7d32;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .btn-download:hover {
-      background-color: #1b5e20;
-    }
+  body {
+    background-color: #1c1c1c;
+    color: #f1f1f1;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  .exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: #0047ab; /* ✅ Deep blue header */
+    padding: 20px;
+    border-radius: 8px;
+    color: #fff;
+  }
+  .student-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .student-info img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+  }
+  .info-text p {
+    margin: 2px 0;
+  }
+  #exam-timer {
+    font-size: 1.5em;
+    font-weight: bold;
+    background-color: #fff;
+    color: #0047ab;
+    padding: 10px 16px;
+    border-radius: 6px;
+  }
+  .question-block {
+    background-color: #2c2c2c;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .question-text {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
+  .options label {
+    display: block;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .options input[type="radio"] {
+    margin-right: 10px;
+  }
+  #nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button {
+    padding: 10px 20px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  button:hover {
+    background-color: darkgreen;
+  }
   </style>
 </head>
 <body>
-  <!-- Background Slideshow -->
-  <div class="slideshow">
-    <img src="https://images.unsplash.com/photo-1601933470928-cb6c2c3b9005?auto=format&fit=crop&w=1600&q=80" alt="School">
-    <img src="https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80" alt="Students">
-    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80" alt="Books">
+
+  <div class="exam-header">
+    <div class="student-info">
+      <img id="student-passport" src="" alt="Passport">
+      <div class="info-text">
+        <p><strong>Name:</strong> <span id="student-name"></span></p>
+        <p><strong>Matric No:</strong> <span id="student-matric"></span></p>
+        <p><strong>Department:</strong> <span id="student-department"></span></p>
+      </div>
+    </div>
+    <div id="exam-timer">Loading...</div>
   </div>
 
-  <!-- Main Overlay -->
-  <div class="overlay">
-    <h1>CBT Student Dashboard</h1>
+  <div id="question-container"><p>Loading question...</p></div>
 
-    <h2>Registered Students</h2>
-    <table class="student-table" id="studentsTable">
-      <thead>
-        <tr>
-          <th>Passport</th>
-          <th>Full Name</th>
-          <th>Matric No</th>
-          <th>Department</th>
-          <th>Phone</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <button class="btn-download" onclick="downloadCSV()">Download Registered Students</button>
-
-    <h2>Active Login Sessions</h2>
-    <ul id="sessionList"></ul>
+  <div id="nav-buttons" style="display:none;">
+    <button id="prev-btn">Previous</button>
+    <button id="next-btn">Next</button>
+    <button id="submit-btn" style="display: none;">Submit Exam</button>
   </div>
 
   <script>
-    async function fetchDashboardData() {
+    const student = JSON.parse(localStorage.getItem("student"));
+    const courseCode = localStorage.getItem("courseCode");
+    if (!student || !courseCode) {
+      alert("Missing student or course data. Redirecting...");
+      window.location.href = "exam-courses.html";
+    }
+
+    document.getElementById("student-name").textContent = student.name;
+    document.getElementById("student-matric").textContent = student.matric;
+    document.getElementById("student-department").textContent = student.department;
+    document.getElementById("student-passport").src = student.passport;
+
+    let questions = [];
+    let answers = {};
+    let currentIndex = 0;
+    let timeLeft = 10 * 60;
+    let hasSubmitted = false;
+
+    function startTimer() {
+      const timer = document.getElementById("exam-timer");
+      const interval = setInterval(() => {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        timer.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        timeLeft--;
+
+        if (timeLeft < 0) {
+          clearInterval(interval);
+          submitExam();
+        }
+      }, 1000);
+    }
+
+    async function fetchExamDetails() {
       try {
-        const res = await fetch("https://cbt-system.onrender.com/api/students/dashboard");
+        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}`);
         const data = await res.json();
-
-        const tableBody = document.querySelector("#studentsTable tbody");
-        tableBody.innerHTML = "";
-
-        data.students.forEach((student) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td><img src="${student.passport}" alt="Passport" class="passport" /></td>
-            <td>${student.name}</td>
-            <td>${student.matric}</td>
-            <td>${student.department}</td>
-            <td>${student.phone}</td>
-            <td>${student.email}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        const sessionList = document.getElementById("sessionList");
-        sessionList.innerHTML = "";
-        data.sessions.forEach((session) => {
-          const li = document.createElement("li");
-          li.textContent = session;
-          sessionList.appendChild(li);
-        });
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
+        if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
+        timeLeft = data.exam.duration * 60;
+      } catch (err) {
+        console.error("Failed to fetch exam details:", err);
+        alert("Using fallback duration: 10 minutes");
+      } finally {
+        startTimer();
       }
     }
 
-    function downloadCSV() {
-      window.location.href = "https://cbt-system.onrender.com/api/students/download";
+    async function fetchQuestions() {
+      try {
+        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/questions`);
+        const data = await res.json();
+        questions = data.questions || [];
+
+        if (questions.length === 0) {
+          document.getElementById("question-container").innerHTML = "<p>No questions available.</p>";
+          return;
+        }
+
+        renderQuestion();
+        document.getElementById("nav-buttons").style.display = "flex";
+      } catch (err) {
+        console.error("Failed to load questions:", err);
+        document.getElementById("question-container").innerHTML = "<p>Error loading questions.</p>";
+      }
     }
 
-    fetchDashboardData();
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const container = document.getElementById("question-container");
+      container.innerHTML = `
+        <div class="question-block">
+          <div class="question-text">${currentIndex + 1}. ${q.questionText}</div>
+          <div class="options">
+            ${Object.entries(q.options).map(([key, val]) => `
+              <label>
+                <input type="radio" name="option" value="${key}" 
+                ${answers[q._id] === key ? "checked" : ""}> ${key}. ${val}
+              </label>
+            `).join("")}
+          </div>
+        </div>
+      `;
+
+      document.getElementById("prev-btn").style.display = currentIndex > 0 ? "inline-block" : "none";
+      document.getElementById("next-btn").style.display = currentIndex < questions.length - 1 ? "inline-block" : "none";
+      document.getElementById("submit-btn").style.display = currentIndex === questions.length - 1 ? "inline-block" : "none";
+    }
+
+    function collectAnswer() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (selected) {
+        const qid = questions[currentIndex]._id;
+        answers[qid] = selected.value;
+      }
+    }
+
+    function submitExam() {
+      if (hasSubmitted) return;
+      hasSubmitted = true;
+
+      collectAnswer();
+
+      fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentMatric: student.matric,
+          answers: answers
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || "Exam submitted successfully!");
+        localStorage.removeItem("courseCode");
+        window.location.href = "student-login.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Submission failed. Try again.");
+        hasSubmitted = false;
+      });
+    }
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+      collectAnswer();
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      }
+    });
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+      collectAnswer();
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", () => {
+      collectAnswer();
+      const totalAnswered = Object.keys(answers).length;
+      if (totalAnswered < questions.length) {
+        if (!confirm("Some questions are unanswered. Submit anyway?")) return;
+      } else {
+        if (!confirm("Are you sure you want to submit your exam?")) return;
+      }
+      submitExam();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) submitExam();
+    });
+
+    fetchExamDetails();
+    fetchQuestions();
+
+  
+  function checkSessionStatus() {
+    fetch("https://cbt-system.onrender.com/api/schedule/session/status")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.active) {
+          alert("Exam session has ended. You will be logged out.");
+          localStorage.removeItem("student"); // or whatever key you use
+          window.location.href = "login.html"; // your student login page
+        }
+      })
+      .catch(err => {
+        console.error("Session check failed:", err);
+      });
+  }
+
+  // Check every 30 seconds
+  setInterval(checkSessionStatus, 30000);
   </script>
+
 </body>
-      </html>
+  </html>
