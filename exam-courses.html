@@ -3,41 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <title>Available Exams</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      background-color: #1a1a1a;
-      color: #f0f0f0;
-      font-family: Arial, sans-serif;
-      padding: 20px;
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --primary-color: #0074cc;
+      --shadow-color: #0074cc;
+      --item-hover: #e0e0e0;
     }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --primary-color: #00ffcc;
+      --shadow-color: #00ffcc;
+      --item-hover: #2a2a2a;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--primary-color);
+      color: white;
+      cursor: pointer;
+    }
+
+    .toggle button:hover {
+      background-color: var(--text-color);
+      color: var(--primary-color);
+    }
+
     h2 {
       text-align: center;
       margin-bottom: 30px;
+      color: var(--primary-color);
     }
+
+    #examList {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
     .exam-item {
-      background-color: #2c2c2c;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 10px;
+      background-color: var(--box-bg);
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, transform 0.2s;
+      box-shadow: 0 0 10px var(--shadow-color);
     }
+
     .exam-item:hover {
-      background-color: #3a3a3a;
+      background-color: var(--item-hover);
+      transform: scale(1.01);
     }
   </style>
 </head>
 <body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2>Select an Exam</h2>
-  <div id="examList"></div>
+  <div id="examList">Loading...</div>
 
   <script>
-    // Check if student is logged in
-    const student = JSON.parse(localStorage.getItem("student"));
-    if (!student) {
-      alert("Please login first.");
-      window.location.href = "student-login.html";
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
     }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+
+      const student = JSON.parse(localStorage.getItem("student"));
+      if (!student) {
+        alert("Please login first.");
+        window.location.href = "student-login.html";
+      } else {
+        fetchExams();
+      }
+    });
 
     async function fetchExams() {
       try {
@@ -47,15 +115,18 @@
         const examList = document.getElementById("examList");
         examList.innerHTML = "";
 
+        if (data?.courses?.length === 0) {
+          examList.innerHTML = "<p>No exams available.</p>";
+          return;
+        }
+
         data.courses.forEach(course => {
           const div = document.createElement("div");
           div.className = "exam-item";
           div.textContent = `${course.title} (${course.code})`;
           div.addEventListener("click", () => {
-            // Save course data in localStorage
             localStorage.setItem("courseTitle", course.title);
             localStorage.setItem("courseCode", course.code);
-            // Redirect to exam page
             window.location.href = "exam.html";
           });
           examList.appendChild(div);
@@ -66,8 +137,6 @@
         document.getElementById("examList").innerHTML = "<p>Error loading exams.</p>";
       }
     }
-
-    fetchExams();
   </script>
 </body>
 </html>
