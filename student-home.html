@@ -1,4 +1,3 @@
-<!-- student-home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,50 +5,136 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Dashboard</title>
   <style>
+    :root {
+      --bg-color: #f9f9f9;
+      --text-color: #333;
+      --primary-color: #0074cc;
+      --card-bg: #ffffff;
+      --card-border: #0074cc;
+      --button-bg: #0074cc;
+      --button-hover: #005fa3;
+    }
+
+    body.dark {
+      --bg-color: #1c1c1c;
+      --text-color: #f1f1f1;
+      --primary-color: #00ffcc;
+      --card-bg: #2c2c2c;
+      --card-border: #00ffcc;
+      --button-bg: #111;
+      --button-hover: #00ffcc;
+    }
+
     body {
-      background-color: #000;
-      color: white;
-      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 60px;
+      padding: 40px 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .toggle-container button {
+      background-color: var(--button-bg);
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .toggle-container button:hover {
+      background-color: var(--button-hover);
+      color: black;
     }
 
     h1 {
-      color: #0f0;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-size: 2em;
     }
 
     .link-box {
-      background: #111;
-      border: 1px solid #0f0;
-      border-radius: 10px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
       padding: 20px;
-      margin: 10px;
-      width: 250px;
+      margin: 12px;
+      width: 260px;
       text-align: center;
-      cursor: pointer;
       transition: 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
     }
 
     .link-box:hover {
-      background: #222;
       transform: scale(1.05);
+      background-color: var(--button-hover);
+      color: black;
     }
 
-    a {
-      color: white;
+    .link-box a {
+      color: var(--text-color);
       text-decoration: none;
+      font-size: 16px;
+      font-weight: 600;
       display: block;
+    }
+
+    body.dark .link-box a {
+      color: var(--text-color);
+    }
+
+    @media (max-width: 500px) {
+      .link-box {
+        width: 90%;
+      }
     }
   </style>
 </head>
 <body>
+
+  <div class="toggle-container">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h1>Welcome Student</h1>
 
-  <div class="link-box"><a href="https://cbt-token-purchase.vercel.app/token-purchase.html">🎫 Buy Token</a></div>
-  <div class="link-box"><a href="https://cbt-system-vert.vercel.app/token-validate.html">✅ Validate Token</a></div>
-  <div class="link-box"><a href="student-register.html">📝 Register</a></div>
-  <div class="link-box"><a href="student-login.html">🔐 Login</a></div>
+  <div class="link-box">
+    <a href="https://cbt-token-purchase.vercel.app/token-purchase.html">🎫 Buy Token</a>
+  </div>
+  <div class="link-box">
+    <a href="https://cbt-system-vert.vercel.app/token-validate.html">✅ Validate Token</a>
+  </div>
+  <div class="link-box">
+    <a href="student-register.html">📝 Register</a>
+  </div>
+  <div class="link-box">
+    <a href="student-login.html">🔐 Login</a>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    // Load saved theme on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+  </script>
+
 </body>
-</html>
+    </html>
