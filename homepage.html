@@ -5,23 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBT Portal</title>
   <style>
+    :root {
+      --bg-color: #f9f9f9;
+      --text-color: #333;
+      --primary-color: #0074cc;
+      --button-bg: #0074cc;
+      --button-hover: #005fa3;
+      --card-bg: #ffffff;
+      --card-border: #0074cc;
+    }
+
+    body.dark {
+      --bg-color: #1c1c1c;
+      --text-color: #f1f1f1;
+      --primary-color: #00ffcc;
+      --button-bg: #111;
+      --button-hover: #00ffcc;
+      --card-bg: #2c2c2c;
+      --card-border: #00ffcc;
+    }
+
     body {
-      background-color: #000;
-      color: white;
-      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       padding: 40px 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     h1 {
-      color: #00ff00;
+      color: var(--primary-color);
       margin-bottom: 10px;
+      font-size: 2.2em;
+    }
+
+    .toggle-container {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .toggle-container button {
+      background: var(--button-bg);
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-container button:hover {
+      background: var(--button-hover);
+      color: black;
     }
 
     p.intro {
-      color: #ccc;
+      color: var(--text-color);
       font-size: 1.1em;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
 
     .buttons {
@@ -33,34 +75,36 @@
     }
 
     .buttons a {
-      background: #111;
+      background: var(--button-bg);
       color: white;
       text-decoration: none;
-      padding: 15px 30px;
-      border: 1px solid #0f0;
+      padding: 14px 28px;
       border-radius: 8px;
-      font-size: 18px;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       transition: 0.3s;
     }
 
     .buttons a:hover {
-      background-color: #0f0;
+      background-color: var(--button-hover);
       color: black;
     }
 
     .rules {
-      background-color: #111;
-      border-left: 4px solid #0f0;
-      padding: 20px;
-      max-width: 700px;
+      background-color: var(--card-bg);
+      border-left: 5px solid var(--card-border);
+      padding: 25px 30px;
+      max-width: 750px;
       margin: auto;
       text-align: left;
-      border-radius: 8px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
     .rules h2 {
-      color: #0f0;
-      margin-bottom: 10px;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      font-size: 1.5em;
     }
 
     .rules ul {
@@ -75,14 +119,28 @@
     @media (max-width: 600px) {
       .buttons {
         flex-direction: column;
+        align-items: center;
+      }
+
+      .buttons a {
+        width: 80%;
+        text-align: center;
+      }
+
+      .toggle-container {
+        text-align: center;
       }
     }
   </style>
 </head>
 <body>
 
-  <h1>Welcome to the CBT Portal</h1>
-  <p class="intro">Select your role to continue</p>
+  <div class="toggle-container">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <h1>CBT Student Portal</h1>
+  <p class="intro">Select your role to proceed</p>
 
   <div class="buttons">
     <a href="student-home.html">🎓 I'm a Student</a>
@@ -100,6 +158,21 @@
       <li>Make sure you have a stable internet connection.</li>
     </ul>
   </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    // Load saved theme on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+  </script>
 
 </body>
 </html>
