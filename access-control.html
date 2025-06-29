@@ -5,24 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Access Control</title>
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #111;
+      --form-bg: #fff;
+      --input-bg: #f9f9f9;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --success-color: #28a745;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark {
+      --bg-color: #000;
+      --text-color: #f0f0f0;
+      --form-bg: #111;
+      --input-bg: #1e1e1e;
+      --button-bg: #00bfff;
+      --button-hover: #0099cc;
+      --success-color: #0f0;
+      --shadow: rgba(0, 255, 255, 0.2);
+    }
+
     body {
-      background: #000;
-      color: white;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-family: sans-serif;
-      padding: 40px;
+      padding: 40px 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+    }
+
+    .toggle button {
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
     }
 
     h2 {
       text-align: center;
+      margin-bottom: 25px;
+      color: var(--button-bg);
     }
 
     form {
-      background: #111;
+      background: var(--form-bg);
       padding: 20px;
       max-width: 500px;
       margin: auto;
       border-radius: 10px;
-      box-shadow: 0 0 10px #0f0;
+      box-shadow: 0 0 12px var(--shadow);
     }
 
     label {
@@ -36,28 +80,40 @@
       font-size: 16px;
       margin-top: 5px;
       border-radius: 5px;
-      border: none;
+      border: 1px solid #ccc;
+      background-color: var(--input-bg);
+      color: var(--text-color);
     }
 
     select[multiple] {
-      height: 50px;
+      height: 70px;
     }
 
-    button {
-      background: green;
+    button[type="submit"] {
+      background-color: var(--button-bg);
       color: white;
-      cursor: pointer;
+      border: none;
       margin-top: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: var(--button-hover);
     }
 
     .success {
-      color: #0f0;
+      color: var(--success-color);
       text-align: center;
       margin-top: 15px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2>Set Exam Access Control</h2>
   <form id="accessForm">
     <label for="departments">Select Departments (Multi-Select)</label>
@@ -104,6 +160,18 @@
   </form>
 
   <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+
     document.getElementById("accessForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -134,8 +202,8 @@
         }
       }
 
-      document.getElementById("statusMessage").textContent = `${successCount} access control rules saved successfully.`;
+      document.getElementById("statusMessage").textContent = `${successCount} access control rule(s) saved successfully.`;
     });
   </script>
 </body>
-</html>
+  </html>
