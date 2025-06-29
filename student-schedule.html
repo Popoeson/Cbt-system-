@@ -3,53 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <title>Upload Scheduled Students</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --input-bg: #fff;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --shadow-color: rgba(0, 123, 255, 0.4);
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --input-bg: #1e1e1e;
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b8;
+      --shadow-color: rgba(0, 255, 204, 0.3);
+    }
+
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding-top: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 50px;
+      transition: background-color 0.3s, color 0.3s;
     }
+
+    .toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--button-bg);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
+      color: black;
+    }
+
     h2 {
-      color: #0f0;
+      color: var(--button-bg);
+      margin-bottom: 20px;
+      text-align: center;
     }
+
     form {
-      background-color: #222;
+      background-color: var(--box-bg);
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #0f0;
+      box-shadow: 0 0 15px var(--shadow-color);
       width: 90%;
       max-width: 500px;
     }
+
     input[type="file"], button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-top: 15px;
-      border-radius: 5px;
-      border: none;
+      border-radius: 6px;
+      border: 1px solid #ccc;
       font-size: 16px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      box-sizing: border-box;
     }
+
     button {
-      background-color: green;
+      background-color: var(--button-bg);
       color: white;
+      font-weight: bold;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: darkgreen;
+      background-color: var(--button-hover);
+      color: black;
     }
+
     #status {
       margin-top: 15px;
       text-align: center;
+      font-size: 15px;
     }
-     .back-home {
+
+    .back-home {
       display: block;
       text-align: center;
-      margin-top: 10px;
-      color: #0f0;
+      margin-top: 15px;
+      color: var(--button-bg);
       text-decoration: none;
+      font-size: 14px;
     }
 
     .back-home:hover {
@@ -58,52 +119,73 @@
   </style>
 </head>
 <body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2>Upload Scheduled Students (Excel)</h2>
+
   <form id="uploadForm">
     <input type="file" id="excelFile" accept=".xlsx, .xls" required />
     <button type="submit">Upload Schedule</button>
     <div id="status"></div>
-     <a class="back-home" href="homepage.html">← Back to Home</a>
+    <a class="back-home" href="homepage.html">← Back to Home</a>
   </form>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-  const uploadForm = document.getElementById("uploadForm");
-  const statusDiv = document.getElementById("status");
-
-  uploadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const fileInput = document.getElementById("excelFile");
-    const file = fileInput.files[0];
-    if (!file) {
-      statusDiv.textContent = "Please select an Excel file.";
-      return;
+    // Theme logic
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("https://cbt-system.onrender.com/api/schedule/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (res.ok) {
-        statusDiv.style.color = "lightgreen";
-        statusDiv.textContent = result.message || "Students scheduled successfully!";
-      } else {
-        statusDiv.style.color = "red";
-        statusDiv.textContent = result.message || "Upload failed.";
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
       }
-    } catch (err) {
-      console.error(err);
-      statusDiv.style.color = "red";
-      statusDiv.textContent = "Server error. Try again.";
-    }
-  });
+    });
+
+    // File upload logic
+    const uploadForm = document.getElementById("uploadForm");
+    const statusDiv = document.getElementById("status");
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("excelFile");
+      const file = fileInput.files[0];
+      if (!file) {
+        statusDiv.textContent = "Please select an Excel file.";
+        statusDiv.style.color = "red";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("https://cbt-system.onrender.com/api/schedule/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          statusDiv.style.color = "green";
+          statusDiv.textContent = result.message || "Students scheduled successfully!";
+        } else {
+          statusDiv.style.color = "red";
+          statusDiv.textContent = result.message || "Upload failed.";
+        }
+      } catch (err) {
+        console.error(err);
+        statusDiv.style.color = "red";
+        statusDiv.textContent = "Server error. Try again.";
+      }
+    });
   </script>
 </body>
 </html>
