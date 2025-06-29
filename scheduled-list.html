@@ -3,62 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <title>Scheduled Students</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --table-bg: #ffffff;
+      --table-header: #007bff;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --shadow-color: rgba(0, 123, 255, 0.3);
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --table-bg: #1e1e1e;
+      --table-header: #00ffcc;
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b8;
+      --shadow-color: rgba(0, 255, 204, 0.3);
+    }
+
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--button-bg);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
+      color: black;
     }
 
     h2 {
       text-align: center;
-      color: #0f0;
+      color: var(--button-bg);
+      margin-bottom: 20px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      background-color: #222;
-      color: white;
+      background-color: var(--table-bg);
+      color: var(--text-color);
+      box-shadow: 0 0 10px var(--shadow-color);
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     th, td {
-      border: 1px solid #333;
-      padding: 10px;
+      padding: 12px 15px;
       text-align: left;
+      border-bottom: 1px solid #ccc;
     }
 
     th {
-      background-color: #333;
+      background-color: var(--table-header);
+      color: white;
     }
 
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: darkred;
+    button.clear-btn {
+      margin: 30px auto 10px;
+      padding: 12px 25px;
+      background-color: crimson;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
+      font-size: 16px;
       cursor: pointer;
       display: block;
-      margin-left: auto;
-      margin-right: auto;
+      transition: background-color 0.3s ease;
     }
 
-    button:hover {
-      background-color: crimson;
+    button.clear-btn:hover {
+      background-color: darkred;
     }
 
     #status {
       text-align: center;
-      margin-top: 10px;
+      margin-top: 15px;
+      font-size: 15px;
     }
   </style>
 </head>
 <body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2>Scheduled Students List</h2>
+
   <table id="scheduleTable">
     <thead>
       <tr>
@@ -71,10 +129,25 @@
     <tbody id="tableBody"></tbody>
   </table>
 
-  <button onclick="clearSchedule()">Clear Scheduled List</button>
+  <button class="clear-btn" onclick="clearSchedule()">Clear Scheduled List</button>
   <div id="status"></div>
 
   <script>
+    // Theme Logic
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+      loadScheduledStudents();
+    });
+
+    // Fetch and display students
     const API = "https://cbt-system.onrender.com";
 
     async function loadScheduledStudents() {
@@ -120,8 +193,6 @@
         document.getElementById("status").textContent = "Failed to clear schedule";
       }
     }
-
-    loadScheduledStudents();
   </script>
 </body>
 </html>
