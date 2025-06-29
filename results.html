@@ -5,16 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBT Results</title>
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --table-bg: #fff;
+      --table-head: #ddd;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --header-color: #007bff;
+      --search-bg: #fff;
+    }
+
+    body.dark {
+      --bg-color: #1f1f1f;
+      --text-color: #f1f1f1;
+      --table-bg: #2a2a2a;
+      --table-head: #333;
+      --button-bg: #00bfff;
+      --button-hover: #009fe0;
+      --header-color: #00bfff;
+      --search-bg: #1e1e1e;
+    }
+
     body {
-      background-color: #1f1f1f;
-      color: #f1f1f1;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-family: Arial, sans-serif;
       padding: 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+    }
+
+    .toggle button, button {
+      padding: 10px 16px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease;
+    }
+
+    .toggle button:hover, button:hover {
+      background-color: var(--button-hover);
     }
 
     h1 {
       text-align: center;
       margin-bottom: 20px;
+      color: var(--header-color);
     }
 
     #search {
@@ -22,12 +67,17 @@
       padding: 10px;
       margin-bottom: 15px;
       font-size: 16px;
+      background-color: var(--search-bg);
+      color: var(--text-color);
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 20px;
+      background-color: var(--table-bg);
     }
 
     th, td {
@@ -37,29 +87,24 @@
     }
 
     th {
-      background-color: #333;
+      background-color: var(--table-head);
     }
 
     tr:nth-child(even) {
-      background-color: #2a2a2a;
+      background-color: rgba(0, 0, 0, 0.05);
     }
 
-    button {
-      padding: 10px 20px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background-color: #45a049;
+    button.download-btn {
+      display: block;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h1>CBT Exam Results</h1>
   <input type="text" id="search" placeholder="Search by name, matric, or course..." />
   <table id="resultsTable">
@@ -75,9 +120,21 @@
     </thead>
     <tbody></tbody>
   </table>
-  <button onclick="downloadCSV()">Download CSV</button>
+  <button class="download-btn" onclick="downloadCSV()">📥 Download CSV</button>
 
   <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+
     const apiUrl = "https://cbt-system.onrender.com/api/results";
 
     async function loadResults() {
@@ -108,7 +165,7 @@
         tbody.appendChild(row);
       });
 
-      // Add search functionality
+      // Search
       const searchInput = document.getElementById("search");
       searchInput.addEventListener("input", () => {
         const searchValue = searchInput.value.toLowerCase();
@@ -130,4 +187,4 @@
     loadResults();
   </script>
 </body>
-</html>
+  </html>
