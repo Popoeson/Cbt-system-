@@ -5,29 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Session Control</title>
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --card-bg: #ffffff;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --shadow-color: rgba(0, 123, 255, 0.3);
+      --slider-bg: #ccc;
+      --slider-checked: #007bff;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --card-bg: #1e1e1e;
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b8;
+      --shadow-color: rgba(0, 255, 204, 0.3);
+      --slider-bg: #555;
+      --slider-checked: #00ffcc;
+    }
+
     body {
-      background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
       flex-direction: column;
     }
 
+    .toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--button-bg);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
+      color: black;
+    }
+
     .card {
-      background-color: #111;
-      padding: 30px;
+      background-color: var(--card-bg);
+      padding: 30px 25px;
       border-radius: 10px;
-      box-shadow: 0 0 10px green;
+      box-shadow: 0 0 15px var(--shadow-color);
       text-align: center;
-      width: 300px;
+      width: 90%;
+      max-width: 400px;
     }
 
     .card h2 {
-      color: #0f0;
       margin-bottom: 20px;
+      color: var(--button-bg);
     }
 
     .switch {
@@ -47,7 +93,7 @@
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #555;
+      background-color: var(--slider-bg);
       transition: 0.4s;
       border-radius: 34px;
     }
@@ -55,15 +101,17 @@
     .slider:before {
       position: absolute;
       content: "";
-      height: 26px; width: 26px;
-      left: 4px; bottom: 4px;
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
       background-color: white;
       transition: 0.4s;
       border-radius: 50%;
     }
 
     input:checked + .slider {
-      background-color: #0f0;
+      background-color: var(--slider-checked);
     }
 
     input:checked + .slider:before {
@@ -73,24 +121,32 @@
     #status {
       margin-top: 15px;
       font-weight: bold;
+      font-size: 15px;
     }
 
     .back-btn {
-      margin-top: 20px;
-      background-color: green;
+      margin-top: 25px;
+      background-color: var(--button-bg);
       color: white;
-      padding: 10px 15px;
+      padding: 12px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
     .back-btn:hover {
-      background-color: darkgreen;
+      background-color: var(--button-hover);
+      color: black;
     }
   </style>
 </head>
 <body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <div class="card">
     <h2>Exam Session Control</h2>
     <label class="switch">
@@ -99,7 +155,7 @@
     </label>
     <p id="status">Loading...</p>
 
-    <button class="back-btn" onclick="window.location.href='admin-home.html'">Back to Home</button>
+    <button class="back-btn" onclick="window.location.href='admin-home.html'">← Back to Home</button>
   </div>
 
   <script>
@@ -108,13 +164,26 @@
     const toggleSwitch = document.getElementById("toggleSwitch");
     const statusText = document.getElementById("status");
 
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+      fetchSessionStatus();
+    });
+
     async function fetchSessionStatus() {
       try {
         const res = await fetch(`${BASE_URL}/api/schedule/session/status`);
         const data = await res.json();
         toggleSwitch.checked = data.active;
         statusText.textContent = data.active ? "Session is ACTIVE" : "Session is INACTIVE";
-        statusText.style.color = data.active ? "lime" : "orange";
+        statusText.style.color = data.active ? "limegreen" : "orange";
       } catch (err) {
         console.error(err);
         statusText.textContent = "Error loading session status";
@@ -133,17 +202,14 @@
 
         const data = await res.json();
         statusText.textContent = active ? "Session is ACTIVE" : "Session is INACTIVE";
-        statusText.style.color = active ? "lime" : "orange";
+        statusText.style.color = active ? "limegreen" : "orange";
         alert(data.message);
       } catch (err) {
         console.error(err);
         alert("Failed to update session");
-        fetchSessionStatus(); // reset toggle
+        fetchSessionStatus(); // Re-fetch to reset toggle state
       }
     });
-
-    // On load
-    fetchSessionStatus();
   </script>
 </body>
 </html>
