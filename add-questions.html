@@ -6,60 +6,141 @@
   <title>Add Exam Questions</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body {
-      background-color: #1c1c1c;
-      color: #f0f0f0;
-      font-family: Arial, sans-serif;
-      padding: 20px;
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --input-bg: #fff;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --shadow-color: rgba(0, 123, 255, 0.4);
     }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --input-bg: #1e1e1e;
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b8;
+      --shadow-color: rgba(0, 255, 204, 0.3);
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--button-bg);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
+      color: black;
+    }
+
     h2 {
       text-align: center;
       margin-bottom: 10px;
+      color: var(--button-bg);
     }
+
     .header-actions {
       text-align: center;
       margin-bottom: 20px;
     }
+
     .question-block {
-      background-color: #2b2b2b;
+      background-color: var(--box-bg);
       padding: 20px;
       margin-bottom: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #000;
+      box-shadow: 0 0 10px var(--shadow-color);
     }
+
     input, textarea, select, button {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      box-sizing: border-box;
     }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--button-bg);
+      box-shadow: 0 0 4px var(--button-bg);
+    }
+
     button {
-      background-color: #00aaff;
+      background-color: var(--button-bg);
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
+
     button:hover {
-      background-color: #0077aa;
+      background-color: var(--button-hover);
+      color: black;
     }
+
     #fileInput {
       display: none;
     }
   </style>
 </head>
 <body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2 id="courseHeader">Add Questions</h2>
   <div class="header-actions">
-    <button onclick="document.getElementById('fileInput').click()">Import from Excel</button>
+    <button onclick="document.getElementById('fileInput').click()">📄 Import from Excel</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileImport(event)" />
   </div>
 
   <form id="questionsForm"></form>
-  <button type="button" onclick="submitQuestions()">Submit All Questions</button>
+  <button type="button" onclick="submitQuestions()">✅ Submit All Questions</button>
 
   <script>
+    // Theme setup
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+
+    // Logic
     const BASE_URL = "https://cbt-system.onrender.com";
     const exam = JSON.parse(localStorage.getItem("examCourse")) || {};
     const questionsForm = document.getElementById("questionsForm");
@@ -72,7 +153,6 @@
 
     courseHeader.textContent = `Add Questions for ${exam.course} (${exam.courseCode})`;
 
-    // Generate empty question blocks
     function generateQuestionBlocks(num) {
       questionsForm.innerHTML = "";
       for (let i = 1; i <= num; i++) {
@@ -100,7 +180,6 @@
 
     generateQuestionBlocks(exam.numQuestions);
 
-    // Import Excel File
     function handleFileImport(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -111,11 +190,6 @@
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-        if (rows.length < 2) {
-          alert("Excel file is empty or missing headers.");
-          return;
-        }
 
         const headers = rows[0].map(h => h.toString().toLowerCase());
         const qIndex = headers.indexOf("question");
@@ -194,9 +268,7 @@
       try {
         const response = await fetch(`${BASE_URL}/api/exams/${exam.courseCode}/questions`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ questions }),
         });
 
@@ -214,4 +286,4 @@
     }
   </script>
 </body>
-  </html>
+</html>
