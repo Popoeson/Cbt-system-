@@ -596,6 +596,38 @@ app.get("/api/admin/access-groups", async (req, res) => {
   }
 });
 
+// Upload Scheduled Students 
+app.options("/api/schedule/upload", cors(corsOptions)); // preflight
+
+app.post("/api/schedule/upload", cors(corsOptions), scheduleUpload.single("file"), async (req, res) => {
+  try {
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const bulkOps = data.map((row) => ({
+      updateOne: {
+        filter: { matric: row.matric },
+        update: {
+          name: row.name,
+          department: row.department,
+          level: row.level,
+          matric: row.matric
+        },
+        upsert: true
+      }
+    }));
+
+    const ScheduledStudent = mongoose.model("ScheduledStudent");
+    await ScheduledStudent.bulkWrite(bulkOps);
+
+    res.json({ message: "Scheduled students uploaded successfully" });
+  } catch (err) {
+    console.error("Excel Upload Error:", err.stack || err);
+    res.status(500).json({ message: "Failed to upload students" });
+  }
+});
+
   // Get JSON results with student details
   app.get("/api/results", async (req, res) => {
     try {
