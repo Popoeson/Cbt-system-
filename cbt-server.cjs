@@ -191,20 +191,23 @@ if (!fs.existsSync(scheduleDir)) {
   fs.mkdirSync(scheduleDir, { recursive: true });
 }
 
-// Multer config
+// General Upload (if you use it elsewhere)
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
 
-// Schedule-specific Multer config
+// ✅ Schedule-specific Multer config
 const scheduleStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/schedules"), // <-- separate folder
+  destination: (req, file, cb) => cb(null, scheduleDir), // <== use variable, not string
   filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 const scheduleUpload = multer({ storage: scheduleStorage });
-
 
 // Department mapping
 function getDepartmentAndLevelFromMatric(matric) {
