@@ -12,12 +12,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+
 const allowedOrigins = [
   "https://cbt-system-vert.vercel.app", // Vercel frontend
-  "http://localhost:3000"               // Optional for local development
+  "http://localhost:3000"               // Local dev (optional)
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -25,8 +26,15 @@ app.use(cors({
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
-}));
+  credentials: true
+};
+
+// CORS for all routes
+app.use(cors(corsOptions));
+
+// 🔁 Handle preflight requests for all routes
+app.options("*", cors(corsOptions));
+
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
