@@ -703,11 +703,39 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-  // ===== School Registration =====
+// ===== School Registration =====
   app.post("/api/schools/register", upload.single("logo"), async (req, res) => {
     try {
       const { name, address, email } = req.body;
       const logo = req.file ? req.file.filename : null;
 
       if (!name || !address || !email || !logo) {
-        return res
+        return res.status(400).json({ message: "All fields are required." });
+      }
+
+      const school = new School({ name, address, email, logo });
+      await school.save();
+
+      res.json({ message: "School registered successfully.", school });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to register school." });
+    }
+  });
+
+  app.get("/api/schools", async (req, res) => {
+    try {
+      const schools = await School.find();
+      const formatted = schools.map((s) => ({
+        ...s._doc,
+        logo: s.logo ? `${req.protocol}://${req.get("host")}/uploads/${s.logo}` : null,
+      }));
+      res.json({ schools: formatted });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch schools." });
+    }
+  });
+
+  // Start Server
+  app.listen(PORT, () => {
+    console.log(`CBT server running at http://localhost:${PORT}`);
+  });
