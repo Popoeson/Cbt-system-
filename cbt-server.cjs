@@ -185,6 +185,12 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Ensure "uploads/schedules" exists
+const scheduleDir = path.join(__dirname, "uploads/schedules");
+if (!fs.existsSync(scheduleDir)) {
+  fs.mkdirSync(scheduleDir, { recursive: true });
+}
+
 // Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
