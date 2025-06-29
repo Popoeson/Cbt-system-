@@ -179,12 +179,6 @@ const School = mongoose.model("School", schoolSchema);
 // Session tracking
 const studentSessions = new Set();
 
-// Ensure uploads folder exists
-const uploadDir = "uploads";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
 // Ensure "uploads/schedules" exists
 const scheduleDir = path.join(__dirname, "uploads/schedules");
 if (!fs.existsSync(scheduleDir)) {
