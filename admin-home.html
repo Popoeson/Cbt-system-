@@ -6,66 +6,139 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #111;
+      --box-bg: #fff;
+      --link-border: #007bff;
+      --link-shadow: rgba(0, 123, 255, 0.3);
+      --btn-bg: #007bff;
+      --btn-hover: #0056b3;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --link-border: #00ffcc;
+      --link-shadow: rgba(0, 255, 204, 0.3);
+      --btn-bg: #00ffcc;
+      --btn-hover: #00e6b8;
+    }
+
     body {
-      background-color: #000;
-      color: white;
-      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 60px;
     }
 
     h1 {
-      color: #0f0;
+      margin-bottom: 20px;
+      font-size: 28px;
+      color: var(--btn-bg);
+    }
+
+    .toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .toggle button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--btn-bg);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .toggle button:hover {
+      background-color: var(--btn-hover);
+      color: black;
     }
 
     .link-box {
-      background: #111;
-      border: 1px solid #0f0;
+      background-color: var(--box-bg);
+      border: 1px solid var(--link-border);
       border-radius: 10px;
-      padding: 20px;
+      padding: 16px;
       margin: 10px;
-      width: 300px;
+      width: 90%;
+      max-width: 320px;
       text-align: center;
-      cursor: pointer;
-      transition: 0.3s;
+      box-shadow: 0 0 10px var(--link-shadow);
+      transition: 0.3s ease;
     }
 
     .link-box:hover {
-      background: #222;
-      transform: scale(1.05);
+      transform: scale(1.04);
+      box-shadow: 0 0 12px var(--btn-bg);
     }
 
-    a {
-      color: white;
+    .link-box a {
+      color: var(--text-color);
       text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
       display: block;
     }
-     .back-home {
-      display: block;
-      text-align: center;
-      margin-top: 15px;
-      color: #4caf50;
-      text-decoration: none;
+
+    .link-box a:hover {
+      color: var(--btn-bg);
     }
+
+    .back-home {
+      margin-bottom: 20px;
+      color: var(--btn-bg);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
     .back-home:hover {
       text-decoration: underline;
-      }
+    }
   </style>
 </head>
 <body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h1>Welcome Admin</h1>
   <a class="back-home" href="homepage.html">← Back to Home</a>
+
   <div class="link-box"><a href="https://cbt-token-purchase.vercel.app/token-logs.html">📊 Token Purchase Logs</a></div>
   <div class="link-box"><a href="dashboard.html">📄 Student Registration Logs</a></div>
   <div class="link-box"><a href="results.html">📈 Student Result Logs</a></div>
-   <div class="link-box"><a href="access-control.html">🔑Access Control</a></div>
+  <div class="link-box"><a href="access-control.html">🔑 Access Control</a></div>
   <div class="link-box"><a href="access-dashboard.html">🔐 Access Control Logs</a></div>
   <div class="link-box"><a href="exam-settings.html">🧾 Set Exam</a></div>
   <div class="link-box"><a href="exam-courses.html">📚 View Available Exams</a></div>
-  <div class="link-box"><a href="student-schedule.html">📅📖Schedule Students for Exam</a></div>
-  <div class="link-box"><a href="scheduled-list.html">👨‍🎓📑View Scheduled Students</a></div>
-   <div class="link-box"><a href="session-control.html">⌛🛂Session Control</a></div>
+  <div class="link-box"><a href="student-schedule.html">📅📖 Schedule Students for Exam</a></div>
+  <div class="link-box"><a href="scheduled-list.html">👨‍🎓📑 View Scheduled Students</a></div>
+  <div class="link-box"><a href="session-control.html">⌛🛂 Session Control</a></div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    });
+  </script>
 </body>
 </html>
