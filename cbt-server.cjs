@@ -114,6 +114,44 @@ const questionSchema = new mongoose.Schema({
   correctAnswer: String,
 });
 
+const examCourseSchema = new mongoose.Schema({
+  course: {
+    type: String,
+    required: true
+  },
+  courseCode: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  numQuestions: {
+    type: Number,
+    required: true
+  },
+  duration: {
+    type: Number, // in minutes
+    required: true
+  },
+  department: {
+    type: String,
+    default: null // can be null if general course
+  },
+  level: {
+    type: String,
+    required: true
+  },
+  isGeneralCourse: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+module.exports = mongoose.model('ExamCourse', examCourseSchema);
+
 const resultSchema = new mongoose.Schema({
   studentMatric: String,
   courseCode: String,
@@ -530,23 +568,46 @@ app.get("/api/students/download", async (req, res) => {
 });
 
   // Create Exam
-  app.post("/api/exams", async (req, res) => {
-    const { course, courseCode, department, level, duration, numQuestions } = req.body;
+app.post("/api/exams", async (req, res) => {
+  const {
+    course,
+    courseCode,
+    department,
+    level,
+    duration,
+    numQuestions,
+    isGeneralCourse
+  } = req.body;
 
-    if (!course || !courseCode || !department || !level || !duration || !numQuestions) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
+  // Validate required fields
+  if (!course || !courseCode || !level || !duration || !numQuestions) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
 
-    const existing = await Exam.findOne({ courseCode });
-    if (existing) {
-      return res.status(409).json({ message: "Exam already exists for this course code." });
-    }
+  // Check if course code already exists
+  const existing = await Exam.findOne({ courseCode });
+  if (existing) {
+    return res.status(409).json({ message: "Exam already exists for this course code." });
+  }
 
-    const exam = new Exam({ course, courseCode, department, level, duration, numQuestions });
-    await exam.save();
+  // If not a general course, department is required
+  if (!isGeneralCourse && !department) {
+    return res.status(400).json({ message: "Department is required for departmental courses." });
+  }
 
-    res.json({ message: "Exam created", exam });
+  const exam = new Exam({
+    course,
+    courseCode,
+    department: isGeneralCourse ? null : department,
+    level,
+    duration,
+    numQuestions,
+    isGeneralCourse: !!isGeneralCourse
   });
+
+  await exam.save();
+  res.json({ message: "Exam created", exam });
+});
 
   // Save Questions
   app.post("/api/exams/:courseCode/questions", async (req, res) => {
