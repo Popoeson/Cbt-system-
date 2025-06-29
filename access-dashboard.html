@@ -5,23 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Access Control Dashboard</title>
   <style>
+    :root {
+      --bg: #f4f4f4;
+      --text: #111;
+      --table-bg: #fff;
+      --table-header: #ddd;
+      --allowed: green;
+      --blocked: red;
+      --btn-bg: #007bff;
+      --btn-hover: #0056b3;
+    }
+
+    body.dark {
+      --bg: #000;
+      --text: #f0f0f0;
+      --table-bg: #111;
+      --table-header: #222;
+      --btn-bg: #00bfff;
+      --btn-hover: #0099cc;
+    }
+
     body {
-      background-color: #000;
-      color: white;
+      background-color: var(--bg);
+      color: var(--text);
       font-family: sans-serif;
-      padding: 30px;
+      padding: 30px 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     h2 {
       text-align: center;
       margin-bottom: 20px;
+      color: var(--btn-bg);
+    }
+
+    .toggle {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+    }
+
+    .toggle button, .refresh {
+      background-color: var(--btn-bg);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px auto;
+      cursor: pointer;
+      border-radius: 5px;
+      display: block;
+      font-size: 14px;
+      transition: background-color 0.3s ease;
+    }
+
+    .toggle button:hover, .refresh:hover {
+      background-color: var(--btn-hover);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: #111;
+      background-color: var(--table-bg);
       border: 1px solid #444;
+      margin-top: 10px;
     }
 
     th, td {
@@ -31,36 +77,29 @@
     }
 
     th {
-      background-color: #222;
+      background-color: var(--table-header);
     }
 
     .status-allowed {
-      color: #0f0;
+      color: var(--allowed);
       font-weight: bold;
     }
 
     .status-blocked {
-      color: red;
+      color: var(--blocked);
       font-weight: bold;
     }
 
     .center {
       text-align: center;
     }
-
-    .refresh {
-      background: green;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin: 20px auto;
-      display: block;
-      cursor: pointer;
-      border-radius: 5px;
-    }
   </style>
 </head>
 <body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <h2>Exam Access Dashboard</h2>
 
   <button class="refresh" onclick="loadAccess()">🔄 Refresh</button>
@@ -79,6 +118,16 @@
   </table>
 
   <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+    });
+
     async function loadAccess() {
       const tbody = document.getElementById("accessTableBody");
       tbody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
@@ -110,7 +159,6 @@
       }
     }
 
-    // Load initially
     loadAccess();
   </script>
 </body>
