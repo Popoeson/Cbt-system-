@@ -340,8 +340,29 @@ app.post("/api/students/login", async (req, res) => {
     return res.status(403).json({ message: "Exam session is not active. Please check back later." });
   }
 
+  // ✅ Fetch all exam courses
+  const allCourses = await ExamCourse.find();
+
+  // ✅ Filter based on general or departmental rules
+  const eligibleCourses = allCourses.filter(course => {
+    if (course.isGeneralCourse) {
+      // For general courses, level must match
+      return course.level === student.level;
+    } else {
+      // For departmental courses, both level and department must match
+      return (
+        course.department === student.department &&
+        course.level === student.level
+      );
+    }
+  });
+
   studentSessions.add(matric);
-  res.json({ message: "Login successful", student });
+  res.json({
+    message: "Login successful",
+    student,
+    eligibleCourses // return only eligible courses
+  });
 });
 
 
