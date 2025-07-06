@@ -145,7 +145,7 @@
 
     async function fetchDashboardData() {
       try {
-        const res = await fetch("https://cbt-system.onrender.com/api/students/dashboard");
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/students/dashboard");
         const data = await res.json();
 
         const tableBody = document.querySelector("#studentsTable tbody");
@@ -177,7 +177,7 @@
     }
 
     function downloadCSV() {
-      window.location.href = "https://cbt-system.onrender.com/api/students/download";
+      window.location.href = "https://testpro-mvh8.onrender.com/api/students/download";
     }
 
     fetchDashboardData();
