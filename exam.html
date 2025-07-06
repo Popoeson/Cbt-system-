@@ -200,7 +200,7 @@
 
     async function fetchExamDetails() {
       try {
-        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}`);
+        const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`);
         const data = await res.json();
         if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
         timeLeft = data.exam.duration * 60;
@@ -214,7 +214,7 @@
 
     async function fetchQuestions() {
       try {
-        const res = await fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/questions`);
+        const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
         const data = await res.json();
         questions = data.questions || [];
 
@@ -266,7 +266,7 @@
       hasSubmitted = true;
       collectAnswer();
 
-      fetch(`https://cbt-system.onrender.com/api/exams/${courseCode}/submit`, {
+      fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentMatric: student.matric, answers })
@@ -316,7 +316,7 @@
     });
 
     function checkSessionStatus() {
-      fetch("https://cbt-system.onrender.com/api/schedule/session/status")
+      fetch("https://testpro-mvh8.onrender.com/api/schedule/session/status")
         .then(res => res.json())
         .then(data => {
           if (!data.active) {
