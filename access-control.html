@@ -189,7 +189,7 @@
       for (const dept of departments) {
         for (const level of levels) {
           try {
-            const res = await fetch("https://cbt-system.onrender.com/api/admin/access-control", {
+            const res = await fetch("https://testpro-mvh8.onrender.com/api/students/login/api/admin/access-control", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ department: dept, level, status })
