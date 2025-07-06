@@ -133,7 +133,7 @@
       tbody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
 
       try {
-        const res = await fetch("https://cbt-system.onrender.com/api/admin/access-groups");
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/students/login/api/admin/access-groups");
         const groups = await res.json();
 
         if (!Array.isArray(groups) || groups.length === 0) {
