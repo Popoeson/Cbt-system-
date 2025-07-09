@@ -107,6 +107,16 @@
       margin-top: 15px;
       font-weight: bold;
     }
+
+    .global-toggle {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .global-toggle label {
+      font-weight: bold;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -115,6 +125,7 @@
   </div>
 
   <h2>Set Exam Access Control</h2>
+
   <form id="accessForm">
     <label for="departments">Select Departments (Multi-Select)</label>
     <select id="departments" multiple required>
@@ -159,7 +170,16 @@
     <div class="success" id="statusMessage"></div>
   </form>
 
+  <div class="global-toggle">
+    <label>
+      <input type="checkbox" id="accessToggle" />
+      Global Access Control: <span id="accessStatus">OFF</span>
+    </label>
+  </div>
+
   <script>
+    const BACKEND = "https://testpro-mvh8.onrender.com";
+
     function toggleTheme() {
       document.body.classList.toggle("dark");
       localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
@@ -170,12 +190,22 @@
       if (savedTheme === "dark") {
         document.body.classList.add("dark");
       }
+
+      // Load toggle status
+      fetch(`${BACKEND}/api/admin/access-control-status`)
+        .then(res => res.json())
+        .then(data => {
+          const toggle = document.getElementById("accessToggle");
+          const status = document.getElementById("accessStatus");
+          toggle.checked = data.accessControlEnabled;
+          status.textContent = toggle.checked ? "ON" : "OFF";
+        });
     });
 
     document.getElementById("accessForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const departments = Array.from(document.getElementById("departments").selectedOptions).map(o => o.value.replace(/\s+HND/, ""));
+      const departments = Array.from(document.getElementById("departments").selectedOptions).map(o => o.value);
       const levels = Array.from(document.getElementById("levels").selectedOptions).map(o => o.value);
       const status = document.getElementById("status").value;
 
@@ -187,23 +217,40 @@
       let successCount = 0;
 
       for (const dept of departments) {
-        for (const level of levels) 
+        for (const level of levels) {
           try {
-            const res = await fetch("https://testpro-mvh8.onrender.com/api/admin/access-control", {
+            const res = await fetch(`${BACKEND}/api/admin/access-control`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ department: dept, level, status })
             });
-
             if (res.ok) successCount++;
           } catch (err) {
-            console.error(`Failed to set access for ${dept} ${level}`, err);
+            console.error(`❌ Error setting ${dept} ${level}:`, err);
           }
         }
       }
 
-      document.getElementById("statusMessage").textContent = `${successCount} access control rule(s) saved successfully.`;
+      document.getElementById("statusMessage").textContent = `${successCount} rule(s) saved successfully.`;
+    });
+
+    document.getElementById("accessToggle").addEventListener("change", () => {
+      const enabled = document.getElementById("accessToggle").checked;
+      fetch(`${BACKEND}/api/admin/toggle-access-control`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled })
+      })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("accessStatus").textContent = enabled ? "ON" : "OFF";
+          alert(data.message);
+        })
+        .catch(err => {
+          console.error("❌ Toggle error:", err);
+          alert("Failed to update access control status.");
+        });
     });
   </script>
 </body>
-  </html>
+          </html>
