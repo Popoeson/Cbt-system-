@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manual Token Generator</title>
+  <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --primary-color: #0074cc;
+      --shadow-color: #0074cc;
+      --highlight: #e0e0e0;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --primary-color: #00ffcc;
+      --shadow-color: #00ffcc;
+      --highlight: #2a2a2a;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 30px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .toggle button {
+      padding: 6px 12px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .container {
+      background-color: var(--box-bg);
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--shadow-color);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    button.generate {
+      padding: 12px 20px;
+      font-size: 1em;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.generate:hover {
+      background-color: var(--highlight);
+      color: var(--primary-color);
+    }
+
+    #generated-token {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    #copy-msg {
+      font-size: 0.9em;
+      margin-top: 8px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <div class="container">
+    <h2>Generate CBT Token (No Payment)</h2>
+    <button class="generate" onclick="generateToken()">Generate Token</button>
+    <div id="generated-token"></div>
+    <div id="copy-msg"></div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+    });
+
+    async function generateToken() {
+      const tokenDiv = document.getElementById("generated-token");
+      const copyMsg = document.getElementById("copy-msg");
+      copyMsg.textContent = "";
+      tokenDiv.textContent = "Generating...";
+
+      try {
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/generate/manual", {
+          method: "POST"
+        });
+        const data = await res.json();
+
+        if (data.token) {
+          tokenDiv.textContent = `Token: ${data.token}`;
+
+          // ✅ Copy to clipboard
+          await navigator.clipboard.writeText(data.token);
+          copyMsg.textContent = "Token copied to clipboard!";
+        } else {
+          tokenDiv.textContent = "Failed to generate token.";
+        }
+      } catch (err) {
+        console.error(err);
+        tokenDiv.textContent = "Error occurred while generating token.";
+      }
+    }
+  </script>
+
+</body>
+</html>
