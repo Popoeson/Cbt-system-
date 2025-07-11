@@ -113,10 +113,10 @@
   <div class="container">
     <h2>Generate CBT Token</h2>
     <input type="email" id="email" placeholder="Enter your email" />
-    <button onclick="checkEmail()">Check Email</button>
+    <button id="check-btn">Check Email</button>
 
     <div id="token-area" class="hidden">
-      <button onclick="generateToken()">Generate Token</button>
+      <button id="generate-btn">Generate Token</button>
       <div id="generated-token"></div>
       <div id="copy-msg"></div>
     </div>
@@ -133,17 +133,22 @@
       if (savedTheme === "dark") document.body.classList.add("dark");
     });
 
+    const checkBtn = document.getElementById("check-btn");
+    const generateBtn = document.getElementById("generate-btn");
+    const tokenArea = document.getElementById("token-area");
+    const tokenDiv = document.getElementById("generated-token");
+    const msgDiv = document.getElementById("copy-msg");
+
     let currentEmail = "";
 
-    async function checkEmail() {
+    checkBtn.addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
-      const tokenArea = document.getElementById("token-area");
-      const msgDiv = document.getElementById("copy-msg");
       tokenArea.classList.add("hidden");
       msgDiv.textContent = "";
+      tokenDiv.textContent = "";
 
-      if (!email) {
-        alert("Please enter your email.");
+      if (!email || !validateEmail(email)) {
+        alert("Enter a valid email address.");
         return;
       }
 
@@ -153,23 +158,21 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email })
         });
-        const data = await res.json();
 
+        const data = await res.json();
         if (data.allowed) {
           currentEmail = email;
           tokenArea.classList.remove("hidden");
         } else {
-          alert(data.message || "Not allowed to generate token.");
+          alert(data.message || "You cannot generate another token with this email.");
         }
       } catch (err) {
         console.error(err);
         alert("Server error while checking email.");
       }
-    }
+    });
 
-    async function generateToken() {
-      const tokenDiv = document.getElementById("generated-token");
-      const msgDiv = document.getElementById("copy-msg");
+    generateBtn.addEventListener("click", async () => {
       tokenDiv.textContent = "Generating...";
       msgDiv.textContent = "";
 
@@ -183,8 +186,18 @@
         const data = await res.json();
         if (data.token) {
           tokenDiv.textContent = `Token: ${data.token}`;
-          await navigator.clipboard.writeText(data.token);
-          msgDiv.textContent = "Token copied to clipboard!";
+          
+          // Clipboard copy must happen on user interaction
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+              await navigator.clipboard.writeText(data.token);
+              msgDiv.textContent = "Token copied to clipboard!";
+            } catch (copyErr) {
+              msgDiv.textContent = "Token generated. Copy manually.";
+            }
+          } else {
+            msgDiv.textContent = "Token generated. Copy manually.";
+          }
         } else {
           tokenDiv.textContent = "Failed to generate token.";
         }
@@ -192,7 +205,11 @@
         console.error(err);
         tokenDiv.textContent = "Error occurred during generation.";
       }
+    });
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
   </script>
 </body>
-</html>
+        </html>
