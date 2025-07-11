@@ -107,6 +107,7 @@
 
   <h1>CBT Exam Results</h1>
   <input type="text" id="search" placeholder="Search by name, matric, or course..." />
+
   <table id="resultsTable">
     <thead>
       <tr>
@@ -114,15 +115,19 @@
         <th>Matric Number</th>
         <th>Department</th>
         <th>Course</th>
-        <th>Score</th>
-        <th>Total</th>
+        <th>CA Score</th>
+        <th>Exam Score</th>
+        <th>Total Score</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+
   <button class="download-btn" onclick="downloadCSV()">📥 Download CSV</button>
 
   <script>
+    const apiUrl = "https://testpro-mvh8.onrender.com/api/results";
+
     function toggleTheme() {
       document.body.classList.toggle("dark");
       localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
@@ -133,9 +138,8 @@
       if (savedTheme === "dark") {
         document.body.classList.add("dark");
       }
+      loadResults();
     });
-
-    const apiUrl = "https://testpro-mvh8.onrender.com/api/results";
 
     async function loadResults() {
       try {
@@ -159,13 +163,14 @@
           <td>${result.matric}</td>
           <td>${result.department}</td>
           <td>${result.courseCode}</td>
-          <td>${result.score}</td>
-          <td>${result.total}</td>
+          <td>${result.caScore || 0}</td>
+          <td>${result.score || 0}</td>
+          <td>${result.totalScore || 0}</td>
         `;
         tbody.appendChild(row);
       });
 
-      // Search
+      // Filter search
       const searchInput = document.getElementById("search");
       searchInput.addEventListener("input", () => {
         const searchValue = searchInput.value.toLowerCase();
@@ -183,8 +188,6 @@
       link.download = "results.csv";
       link.click();
     }
-
-    loadResults();
   </script>
 </body>
-  </html>
+          </html>
