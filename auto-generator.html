@@ -18,8 +18,8 @@
       --bg-color: #121212;
       --text-color: #f0f0f0;
       --box-bg: #1e1e1e;
-      --primary-color: #00ffcc;
-      --shadow-color: #00ffcc;
+      --primary-color: #0074cc;
+      --shadow-color: #0074cc;
       --highlight: #2a2a2a;
     }
 
@@ -79,6 +79,7 @@
       color: white;
       border-radius: 8px;
       cursor: pointer;
+      margin-bottom: 10px;
     }
 
     button:hover {
@@ -96,6 +97,12 @@
     #copy-msg {
       font-size: 0.9em;
       margin-top: 8px;
+      color: green;
+    }
+
+    #success-msg {
+      font-size: 0.9em;
+      margin-top: 4px;
       color: green;
     }
 
@@ -119,6 +126,7 @@
       <button id="generate-btn">Generate Token</button>
       <div id="generated-token"></div>
       <div id="copy-msg"></div>
+      <div id="success-msg"></div>
     </div>
   </div>
 
@@ -138,6 +146,7 @@
     const tokenArea = document.getElementById("token-area");
     const tokenDiv = document.getElementById("generated-token");
     const msgDiv = document.getElementById("copy-msg");
+    const successDiv = document.getElementById("success-msg");
 
     let currentEmail = "";
 
@@ -146,6 +155,7 @@
       tokenArea.classList.add("hidden");
       msgDiv.textContent = "";
       tokenDiv.textContent = "";
+      successDiv.textContent = "";
 
       if (!email || !validateEmail(email)) {
         alert("Enter a valid email address.");
@@ -175,6 +185,7 @@
     generateBtn.addEventListener("click", async () => {
       tokenDiv.textContent = "Generating...";
       msgDiv.textContent = "";
+      successDiv.textContent = "";
 
       try {
         const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/generate/manual", {
@@ -186,17 +197,18 @@
         const data = await res.json();
         if (data.token) {
           tokenDiv.textContent = `Token: ${data.token}`;
-          
+
           // Clipboard copy must happen on user interaction
           if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
               await navigator.clipboard.writeText(data.token);
               msgDiv.textContent = "Token copied to clipboard!";
+              successDiv.textContent = "✅ Token generated successfully. The cost is being paid for by the ICT Resource Center.";
             } catch (copyErr) {
-              msgDiv.textContent = "Token generated. Copy manually.";
+              msgDiv.textContent = "Token generated. Copy To Clipboard.";
             }
           } else {
-            msgDiv.textContent = "Token generated. Copy manually.";
+            msgDiv.textContent = "Token generated. Copy To Clipboard.";
           }
         } else {
           tokenDiv.textContent = "Failed to generate token.";
@@ -212,4 +224,4 @@
     }
   </script>
 </body>
-        </html>
+</html>
