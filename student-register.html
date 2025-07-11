@@ -11,7 +11,7 @@
       --input-bg: #f0f0f0;
       --accent: #007bff;
       --shadow: rgba(0, 123, 255, 0.5);
-      -- btn-bg: #007bff;
+      --btn-bg: #007bff;
       --btn-hover: #0056b3;
     }
 
@@ -20,8 +20,6 @@
       --text: #ffffff;
       --input-bg: #1e1e1e;
       --shadow: rgba(0, 123, 255, 0.6);
-       --btn-bg: #007bff;
-      --btn-hover: #0056b3;
     }
 
     body {
@@ -31,12 +29,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
-      transition: background 0.3s, color 0.3s;
+      padding: 10px;
     }
 
-     .toggle {
+    .toggle {
       position: absolute;
       top: 10px;
       right: 20px;
@@ -56,42 +54,33 @@
       padding: 25px;
       border-radius: 10px;
       box-shadow: 0 0 10px var(--shadow);
-      width: 90%;
+      width: 100%;
       max-width: 420px;
-      color: var(--text);
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 20px;
       color: var(--accent);
+      margin-bottom: 20px;
     }
 
-    input,
-    select,
-    button {
+    input, select, button {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
       border: none;
       border-radius: 5px;
       font-size: 15px;
-      background-color: #fff;
-    }
-
-    body.dark input,
-    body.dark select {
-      background-color: #2c2c2c;
-      color: white;
     }
 
     input::placeholder {
       color: #888;
     }
 
-    input[readonly] {
-      background-color: #e0e0e0;
-      color: #555;
+    body.dark input,
+    body.dark select {
+      background-color: #2c2c2c;
+      color: white;
     }
 
     .toggle-password {
@@ -105,15 +94,15 @@
     }
 
     button {
-      background-color: var(--accent);
+      background-color: var(--btn-bg);
       color: white;
       font-weight: bold;
-      transition: background-color 0.3s;
       margin-top: 15px;
+      transition: background-color 0.3s;
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: var(--btn-hover);
     }
 
     button:disabled {
@@ -123,24 +112,22 @@
 
     .spinner {
       text-align: center;
-      margin-top: 10px;
       font-size: 14px;
-      color: var(--text);
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
   <div class="toggle">
     <button onclick="toggleTheme()">🌓 Toggle Theme</button>
   </div>
 
-  <form id="registerForm">
+  <form id="registerForm" enctype="multipart/form-data">
     <h2>Student Registration</h2>
 
     <input type="text" id="token" name="token" readonly placeholder="Token" />
     <input type="text" id="name" placeholder="Full Name" required />
-    <input type="text" id="matric" placeholder="Matric Number" required />
+    <input type="text" id="matric" placeholder="Matric Number" required autocapitalize="off" />
 
     <select id="level" required>
       <option value="">Select Level</option>
@@ -150,7 +137,7 @@
       <option value="HND2">HND2</option>
     </select>
 
-    <input type="email" id="email" placeholder="Email Address" required />
+    <input type="email" id="email" placeholder="Email Address" required autocapitalize="off" />
     <input type="tel" id="phone" placeholder="Phone Number" required />
 
     <input type="password" id="password" placeholder="Password" required />
@@ -176,79 +163,76 @@
       document.body.classList.toggle("dark");
       localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
     }
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedTheme = localStorage.getItem("cbtTheme");
-      if (savedTheme === "dark") document.body.classList.add("dark");
-    });
 
     document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+
       const token = localStorage.getItem("validToken");
       if (!token) {
-        window.location.href = "https://cbt-system-vert.vercel.app/token-validate.html";
+        window.location.href = "token-validate.html";
         return;
       }
-
       document.getElementById("token").value = token;
+    });
 
-      const form = document.getElementById("registerForm");
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const matric = document.getElementById("matric").value.trim();
+      const level = document.getElementById("level").value;
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const passport = document.getElementById("passport").files[0];
+      const token = document.getElementById("token").value;
+
+      if (!passport) return alert("Please upload a passport photo.");
+      if (!level) return alert("Please select your level.");
+      if (!email.includes("@") || !email.includes(".")) return alert("Enter a valid email.");
+      if (password !== confirmPassword) return alert("Passwords do not match.");
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("matric", matric);
+      formData.append("level", level);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("password", password);
+      formData.append("passport", passport);
+      formData.append("token", token);
+
       const registerBtn = document.getElementById("registerBtn");
       const spinner = document.getElementById("spinner");
+      registerBtn.disabled = true;
+      spinner.style.display = "block";
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      try {
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/students/register", {
+          method: "POST",
+          body: formData
+        });
 
-        const name = document.getElementById("name").value.trim();
-        const matric = document.getElementById("matric").value.trim();
-        const level = document.getElementById("level").value;
-        const email = document.getElementById("email").value.trim();
-        const phone = document.getElementById("phone").value.trim();
-        const password = document.getElementById("password").value;
-        const confirmPassword = document.getElementById("confirmPassword").value;
-        const passport = document.getElementById("passport").files[0];
-        const token = document.getElementById("token").value;
+        const data = await res.json();
 
-        if (!level) return alert("Please select your level.");
-        if (!email.includes("@") || !email.includes(".")) return alert("Enter a valid email.");
-        if (password !== confirmPassword) return alert("Passwords do not match.");
-
-        const formData = new FormData();
-        formData.append("name", name);
-        formData.append("matric", matric);
-        formData.append("level", level);
-        formData.append("email", email);
-        formData.append("phone", phone);
-        formData.append("password", password);
-        formData.append("passport", passport);
-        formData.append("token", token);
-
-        registerBtn.disabled = true;
-        spinner.style.display = "block";
-
-        try {
-          const res = await fetch("https://testpro-mvh8.onrender.com/api/students/register", {
-            method: "POST",
-            body: formData
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            alert(data.message);
-            throw new Error(data.message || "Registration failed");
-          }
-
-          alert("Registration successful!");
-          localStorage.removeItem("validToken");
-          window.location.href = "student-login.html";
-        } catch (err) {
-          console.error(err);
-          alert("Something went wrong. Please try again.");
-        } finally {
-          registerBtn.disabled = false;
-          spinner.style.display = "none";
+        if (!res.ok) {
+          alert(data.message || "Registration failed");
+          throw new Error(data.message);
         }
-      });
+
+        alert("Registration successful!");
+        localStorage.removeItem("validToken");
+        window.location.href = "student-login.html";
+      } catch (err) {
+        console.error("Registration error:", err);
+        alert("An error occurred. Try again.");
+      } finally {
+        registerBtn.disabled = false;
+        spinner.style.display = "none";
+      }
     });
   </script>
 </body>
-</html>
+  </html>
