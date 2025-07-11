@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manual Token Generator</title>
+  <title>Generate Token</title>
   <style>
     :root {
       --bg-color: #f2f2f2;
@@ -27,12 +27,10 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 30px;
-      transition: background-color 0.3s ease, color 0.3s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 30px;
     }
 
     .toggle {
@@ -64,7 +62,16 @@
       margin-bottom: 20px;
     }
 
-    button.generate {
+    input[type="email"] {
+      padding: 10px;
+      width: 100%;
+      font-size: 1em;
+      border: 1px solid var(--primary-color);
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    button {
       padding: 12px 20px;
       font-size: 1em;
       border: none;
@@ -74,7 +81,7 @@
       cursor: pointer;
     }
 
-    button.generate:hover {
+    button:hover {
       background-color: var(--highlight);
       color: var(--primary-color);
     }
@@ -91,6 +98,10 @@
       margin-top: 8px;
       color: green;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -100,10 +111,15 @@
   </div>
 
   <div class="container">
-    <h2>Generate CBT Token (No Payment)</h2>
-    <button class="generate" onclick="generateToken()">Generate Token</button>
-    <div id="generated-token"></div>
-    <div id="copy-msg"></div>
+    <h2>Generate CBT Token</h2>
+    <input type="email" id="email" placeholder="Enter your email" />
+    <button onclick="checkEmail()">Check Email</button>
+
+    <div id="token-area" class="hidden">
+      <button onclick="generateToken()">Generate Token</button>
+      <div id="generated-token"></div>
+      <div id="copy-msg"></div>
+    </div>
   </div>
 
   <script>
@@ -117,33 +133,66 @@
       if (savedTheme === "dark") document.body.classList.add("dark");
     });
 
-    async function generateToken() {
-      const tokenDiv = document.getElementById("generated-token");
-      const copyMsg = document.getElementById("copy-msg");
-      copyMsg.textContent = "";
-      tokenDiv.textContent = "Generating...";
+    let currentEmail = "";
+
+    async function checkEmail() {
+      const email = document.getElementById("email").value.trim();
+      const tokenArea = document.getElementById("token-area");
+      const msgDiv = document.getElementById("copy-msg");
+      tokenArea.classList.add("hidden");
+      msgDiv.textContent = "";
+
+      if (!email) {
+        alert("Please enter your email.");
+        return;
+      }
 
       try {
-        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/generate/manual", {
-          method: "POST"
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
         });
         const data = await res.json();
 
+        if (data.allowed) {
+          currentEmail = email;
+          tokenArea.classList.remove("hidden");
+        } else {
+          alert(data.message || "Not allowed to generate token.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Server error while checking email.");
+      }
+    }
+
+    async function generateToken() {
+      const tokenDiv = document.getElementById("generated-token");
+      const msgDiv = document.getElementById("copy-msg");
+      tokenDiv.textContent = "Generating...";
+      msgDiv.textContent = "";
+
+      try {
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/generate/manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: currentEmail })
+        });
+
+        const data = await res.json();
         if (data.token) {
           tokenDiv.textContent = `Token: ${data.token}`;
-
-          // ✅ Copy to clipboard
           await navigator.clipboard.writeText(data.token);
-          copyMsg.textContent = "Token copied to clipboard!";
+          msgDiv.textContent = "Token copied to clipboard!";
         } else {
           tokenDiv.textContent = "Failed to generate token.";
         }
       } catch (err) {
         console.error(err);
-        tokenDiv.textContent = "Error occurred while generating token.";
+        tokenDiv.textContent = "Error occurred during generation.";
       }
     }
   </script>
-
 </body>
 </html>
