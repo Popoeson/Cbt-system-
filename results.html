@@ -3,36 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBT Results</title>
+  <title>Student Dashboard</title>
   <style>
     :root {
       --bg-color: #f2f2f2;
       --text-color: #222;
-      --table-bg: #fff;
+      --box-bg: #ffffff;
+      --header-color: #007bff;
       --table-head: #ddd;
       --button-bg: #007bff;
       --button-hover: #0056b3;
-      --header-color: #007bff;
-      --search-bg: #fff;
     }
 
     body.dark {
-      --bg-color: #1f1f1f;
-      --text-color: #f1f1f1;
-      --table-bg: #2a2a2a;
-      --table-head: #333;
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --header-color: #00bfff;
+      --table-head: #2a2a2a;
       --button-bg: #00bfff;
       --button-hover: #009fe0;
-      --header-color: #00bfff;
-      --search-bg: #1e1e1e;
     }
 
     body {
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: Arial, sans-serif;
+      margin: 0;
       padding: 20px;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .toggle {
@@ -41,28 +40,67 @@
       right: 20px;
     }
 
-    .toggle button, button {
+    .toggle button,
+    .download-btn {
       padding: 10px 16px;
       background-color: var(--button-bg);
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s;
       font-size: 14px;
-      transition: background-color 0.3s ease;
     }
 
-    .toggle button:hover, button:hover {
+    .toggle button:hover,
+    .download-btn:hover {
       background-color: var(--button-hover);
+      color: white;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
-      margin-bottom: 20px;
       color: var(--header-color);
     }
 
-    #search {
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .student-table th, .student-table td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .student-table th {
+      background-color: var(--table-head);
+      color: var(--text-color);
+    }
+
+    img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .download-btn {
+      display: block;
+      margin: 20px auto;
+    }
+
+    #sessionList {
+      margin-top: 15px;
+      padding-left: 20px;
+    }
+
+    #sessionList li {
+      margin-bottom: 5px;
+    }
+      #search {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
@@ -72,62 +110,39 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-      background-color: var(--table-bg);
-    }
-
-    th, td {
-      border: 1px solid #444;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background-color: var(--table-head);
-    }
-
-    tr:nth-child(even) {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    button.download-btn {
-      display: block;
-      margin: 0 auto;
-    }
+    
   </style>
 </head>
 <body>
+
   <div class="toggle">
     <button onclick="toggleTheme()">🌓 Toggle Theme</button>
   </div>
 
-  <h1>CBT Exam Results</h1>
-  <input type="text" id="search" placeholder="Search by name, matric, or course..." />
+  <h1>CBT Student Dashboard</h1>
 
-  <table id="resultsTable">
+  <button class="download-btn" onclick="downloadCSV()">📥 Download Registered Students</button>
+
+  <h2>Registered Students</h2>
+  <input type="text" id="search" placeholder="Search by name, matric, or mail..." />
+  <table class="student-table" id="studentsTable">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Matric Number</th>
+        <th>Passport</th>
+        <th>Full Name</th>
+        <th>Matric No</th>
         <th>Department</th>
-        <th>Course</th>
-        <th>CA Score</th>
-        <th>Exam Score</th>
-        <th>Total Score</th>
+        <th>Phone</th>
+        <th>Email</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <button class="download-btn" onclick="downloadCSV()">📥 Download CSV</button>
+  <h2>Active Login Sessions</h2>
+  <ul id="sessionList"></ul>
 
   <script>
-    const apiUrl = "https://testpro-mvh8.onrender.com/api/results";
-
     function toggleTheme() {
       document.body.classList.toggle("dark");
       localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
@@ -138,56 +153,62 @@
       if (savedTheme === "dark") {
         document.body.classList.add("dark");
       }
-      loadResults();
     });
 
-    async function loadResults() {
+    async function fetchDashboardData() {
       try {
-        const res = await fetch(apiUrl);
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/students/dashboard");
         const data = await res.json();
-        populateTable(data);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load results. Try again.");
+
+        const tableBody = document.querySelector("#studentsTable tbody");
+        tableBody.innerHTML = "";
+
+        data.students.forEach((student) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${student.passport}" alt="Passport" /></td>
+            <td>${student.name}</td>
+            <td>${student.matric}</td>
+            <td>${student.department}</td>
+            <td>${student.phone}</td>
+            <td>${student.email}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        const sessionList = document.getElementById("sessionList");
+        sessionList.innerHTML = "";
+        data.sessions.forEach((session) => {
+          const li = document.createElement("li");
+          li.textContent = session;
+          sessionList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
       }
     }
+   
+  // Filter search (corrected)
+  window.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("search");
+    const tbody = document.querySelector("#studentsTable tbody");
 
-    function populateTable(data) {
-      const tbody = document.querySelector("#resultsTable tbody");
-      tbody.innerHTML = "";
+    searchInput.addEventListener("input", () => {
+      const searchValue = searchInput.value.toLowerCase();
+      const rows = tbody.querySelectorAll("tr");
 
-      data.forEach(result => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${result.name}</td>
-          <td>${result.matric}</td>
-          <td>${result.department}</td>
-          <td>${result.courseCode}</td>
-          <td>${result.caScore || 0}</td>
-          <td>${result.score || 0}</td>
-          <td>${result.totalScore || 0}</td>
-        `;
-        tbody.appendChild(row);
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        row.style.display = rowText.includes(searchValue) ? "" : "none";
       });
-
-      // Filter search
-      const searchInput = document.getElementById("search");
-      searchInput.addEventListener("input", () => {
-        const searchValue = searchInput.value.toLowerCase();
-        const rows = tbody.querySelectorAll("tr");
-        rows.forEach(row => {
-          const text = row.innerText.toLowerCase();
-          row.style.display = text.includes(searchValue) ? "" : "none";
-        });
-      });
-    }
-
+    });
+  });
+    
     function downloadCSV() {
-      const link = document.createElement("a");
-      link.href = "https://testpro-mvh8.onrender.com/api/results/download";
-      link.download = "results.csv";
-      link.click();
+      window.location.href = "https://testpro-mvh8.onrender.com/api/students/download";
     }
+
+    fetchDashboardData();
   </script>
 </body>
-          </html>
+</html>
