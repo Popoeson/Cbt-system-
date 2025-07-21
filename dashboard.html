@@ -100,6 +100,17 @@
     #sessionList li {
       margin-bottom: 5px;
     }
+      #search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      background-color: var(--search-bg);
+      color: var(--text-color);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    
   </style>
 </head>
 <body>
@@ -113,6 +124,7 @@
   <button class="download-btn" onclick="downloadCSV()">📥 Download Registered Students</button>
 
   <h2>Registered Students</h2>
+  <input type="text" id="search" placeholder="Search by name, matric, or mail..." />
   <table class="student-table" id="studentsTable">
     <thead>
       <tr>
@@ -175,7 +187,23 @@
         console.error("Failed to load dashboard data", error);
       }
     }
+   
+  // Filter search (corrected)
+  window.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("search");
+    const tbody = document.querySelector("#studentsTable tbody");
 
+    searchInput.addEventListener("input", () => {
+      const searchValue = searchInput.value.toLowerCase();
+      const rows = tbody.querySelectorAll("tr");
+
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        row.style.display = rowText.includes(searchValue) ? "" : "none";
+      });
+    });
+  });
+    
     function downloadCSV() {
       window.location.href = "https://testpro-mvh8.onrender.com/api/students/download";
     }
@@ -183,4 +211,4 @@
     fetchDashboardData();
   </script>
 </body>
-  </html>
+</html>
