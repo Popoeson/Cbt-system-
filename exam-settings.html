@@ -155,7 +155,35 @@
     <input type="text" id="courseCode" placeholder="Course Code" required />
     <input type="number" id="numQuestions" placeholder="Number of Questions" required min="1" />
 
-   home.html">← Back to Admin Home</a>
+   <select id="department" multiple required>  
+  <option value="">Select Department</option>  
+  <option value="Computer Science">Computer Science</option>  
+  <option value="Computer Engineering">Computer Engineering</option>  
+  <option value="Science Lab Tech">Science Lab Tech</option>  
+  <option value="Business Admin">Business Admin</option>  
+  <option value="Mass Communication">Mass Communication</option>  
+  <option value="Estate Management">Estate Management</option>  
+  <option value="Electrical Engineering">Electrical Engineering</option>  
+  <option value="Computer Engineering">Computer Engineering</option>  
+  <option value="Accountancy">Accountancy</option>  
+  <option value="Medical Lab Tech">Medical Lab Tech</option>  
+</select>  
+
+<select id="level" required>  
+  <option value="">Select Level</option>  
+  <option value="ND1">ND1</option>  
+  <option value="ND2">ND2</option>  
+  <option value="HND1">HND1</option>  
+  <option value="HND2">HND2</option>  
+</select>  
+
+<input type="number" id="duration" placeholder="Duration (minutes)" required min="1" />
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">  
+  <label for="isGeneral" style="margin: 0;">Is this a general course?</label>  
+  <input type="checkbox" id="isGeneral" onchange="handleGeneralToggle()" />  
+</div>  <button type="submit" id="submitBtn">Set Exam Questions</button>  
+<a class="back-home" href="admin-home.html">← Back to Admin Home</a>
   </form>
 
   <script>
