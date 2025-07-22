@@ -106,36 +106,41 @@
         fetchExams();
       }
     });
+async function fetchExams() {
+  try {
+    const student = JSON.parse(localStorage.getItem("student"));
+    const dept = student.department;
+    const level = student.level;
 
-    async function fetchExams() {
-      try {
-        const response = await fetch("https://testpro-mvh8.onrender.com/api/questions/courses");
-        const data = await response.json();
+    const response = await fetch(`https://testpro-mvh8.onrender.com/api/questions/courses?department=${encodeURIComponent(dept)}&level=${encodeURIComponent(level)}`);
+    const data = await response.json();
 
-        const examList = document.getElementById("examList");
-        examList.innerHTML = "";
+    const examList = document.getElementById("examList");
+    examList.innerHTML = "";
 
-        if (data?.courses?.length === 0) {
-          examList.innerHTML = "<p>No exams available.</p>";
-          return;
-        }
+    if (!data.courses || data.courses.length === 0) {
+      examList.innerHTML = "<p>No exams available for your department/level.</p>";
+      return;
+    }
 
-        data.courses.forEach(course => {
-          const div = document.createElement("div");
-          div.className = "exam-item";
-          div.textContent = `${course.title} (${course.code})`;
-          div.addEventListener("click", () => {
-            localStorage.setItem("courseTitle", course.title);
-            localStorage.setItem("courseCode", course.code);
-            window.location.href = "exam.html";
-          });
-          examList.appendChild(div);
-        });
+    data.courses.forEach(course => {
+      const div = document.createElement("div");
+      div.className = "exam-item";
+      div.textContent = `${course.title} (${course.code})`;
+      div.addEventListener("click", () => {
+        localStorage.setItem("courseTitle", course.title);
+        localStorage.setItem("courseCode", course.code);
+        localStorage.setItem("courseDuration", course.duration);
+        localStorage.setItem("courseNumQuestions", course.numQuestions);
+        window.location.href = "exam.html";
+      });
+      examList.appendChild(div);
+    });
 
-      } catch (err) {
-        console.error("Failed to fetch courses:", err);
-        document.getElementById("examList").innerHTML = "<p>Error loading exams.</p>";
-      }
+  } catch (err) {
+    console.error("Failed to fetch courses:", err);
+    document.getElementById("examList").innerHTML = "<p>Error loading exams.</p>";
+  }
     }
   </script>
 </body>
