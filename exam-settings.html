@@ -155,37 +155,7 @@
     <input type="text" id="courseCode" placeholder="Course Code" required />
     <input type="number" id="numQuestions" placeholder="Number of Questions" required min="1" />
 
-    <select id="department" multiple required>
-      <option value="">Select Department</option>
-      <option value="Computer Science">Computer Science</option>
-      <option value="Computer Engineering">Computer Engineering</option>
-      <option value="Science Lab Tech">Science Lab Tech</option>
-      <option value="Business Admin">Business Admin</option>
-      <option value="Mass Communication">Mass Communication</option>
-      <option value="Estate Management">Estate Management</option>
-      <option value="Electrical Engineering">Electrical Engineering</option>
-      <option value="Computer Engineering">Computer Engineering</option>
-      <option value="Accountancy">Accountancy</option>
-      <option value="Medical Lab Tech">Medical Lab Tech</option>
-    </select>
-
-    <select id="level" required>
-      <option value="">Select Level</option>
-      <option value="ND1">ND1</option>
-      <option value="ND2">ND2</option>
-      <option value="HND1">HND1</option>
-      <option value="HND2">HND2</option>
-    </select>
-
-    <input type="number" id="duration" placeholder="Duration (minutes)" required min="1" />
-
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-  <label for="isGeneral" style="margin: 0;">Is this a general course?</label>
-  <input type="checkbox" id="isGeneral" onchange="handleGeneralToggle()" />
-</div>
-
-    <button type="submit" id="submitBtn">Set Exam Questions</button>
-    <a class="back-home" href="admin-home.html">← Back to Admin Home</a>
+   home.html">← Back to Admin Home</a>
   </form>
 
   <script>
@@ -210,54 +180,58 @@
   const submitBtn = document.getElementById("submitBtn");
 
   form.addEventListener("submit", async function (e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const course = document.getElementById("course").value.trim();
-    const courseCode = document.getElementById("courseCode").value.trim();
-    const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
-    const department = document.getElementById("department").value.trim();
-    const level = document.getElementById("level").value.trim();
-    const duration = parseInt(document.getElementById("duration").value.trim());
-    const isGeneral = document.getElementById("isGeneral").checked;
+  const course = document.getElementById("course").value.trim();
+  const courseCode = document.getElementById("courseCode").value.trim();
+  const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
+  const rawDepartment = document.getElementById("department").value.trim();
+  const rawLevel = document.getElementById("level").value.trim();
+  const duration = parseInt(document.getElementById("duration").value.trim());
+  const isGeneral = document.getElementById("isGeneral").checked;
 
-    const examCourse = {
-      course,
-      courseCode,
-      numQuestions,
-      department: isGeneral ? null : department,
-      level,
-      duration,
-      isGeneral
-    };
+  // Normalize inputs
+  const department = isGeneral ? null : rawDepartment.replace(/\s+/g, " ").toUpperCase();
+  const level = rawLevel.replace(/\s+/g, "").toUpperCase(); // Ensures ND2, HND1, etc.
 
-    localStorage.setItem("examCourse", JSON.stringify(examCourse));
+  const examCourse = {
+    course,
+    courseCode,
+    numQuestions,
+    department,
+    level,
+    duration,
+    isGeneral
+  };
 
-    // Disable UI and show spinner
-    [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = true);
-    spinner.style.display = "block";
+  localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
-    try {
-      const res = await fetch(`${BASE_URL}/api/exams`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(examCourse)
-      });
+  // Disable UI and show spinner
+  [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = true);
+  spinner.style.display = "block";
 
-      const data = await res.json();
+  try {
+    const res = await fetch(`${BASE_URL}/api/exams`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(examCourse)
+    });
 
-      if (!res.ok) {
-        alert("Failed to save exam: " + (data.message || "Unknown error"));
-      } else {
-        window.location.href = "add-questions.html";
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Server error. Try again later.");
-    } finally {
-      spinner.style.display = "none";
-      [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = false);
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("Failed to save exam: " + (data.message || "Unknown error"));
+    } else {
+      window.location.href = "add-questions.html";
     }
-  });
+  } catch (err) {
+    console.error(err);
+    alert("Server error. Try again later.");
+  } finally {
+    spinner.style.display = "none";
+    [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = false);
+  }
+});
 </script>
 </body>
       </html>
