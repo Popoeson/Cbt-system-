@@ -249,7 +249,8 @@
             name: data.student.name,
             matric: data.student.matric,
             passport: data.student.passport,
-            department: data.student.department
+            department: data.student.department,
+            level: data.student.level   
           };
           localStorage.setItem("student", JSON.stringify(studentData));
           window.location.href = "exam-courses.html";
