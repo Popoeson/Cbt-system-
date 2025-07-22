@@ -6,136 +6,103 @@
   <title>Available Exams</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #f9f9f9;
-      color: #333;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Top right buttons */
-    .top-controls {
-      display: flex;
-      justify-content: flex-end;
-      padding: 10px 20px;
-      gap: 10px;
-    }
-
-    .top-controls button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 5px;
-      background-color: #007bff;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
       color: white;
-      cursor: pointer;
+      font-family: Arial, sans-serif;
+      padding: 20px;
     }
 
-    .top-controls button:hover {
-      background-color: #0056b3;
-    }
-
-    /* Center content */
-    .exam-container {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    h1 {
       text-align: center;
     }
 
-    .exam-container h2 {
-      font-size: 28px;
-      margin-bottom: 10px;
-      color: #007bff;
-    }
-
-    .exam-container p {
-      margin-bottom: 20px;
-      font-weight: 500;
-      font-size: 16px;
-    }
-
-    .exam-item {
-      background-color: #fff;
+    .course {
+      background-color: #1e3a5f;
+      margin: 10px 0;
       padding: 15px;
-      margin: 10px;
       border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-      width: 300px;
       cursor: pointer;
-      transition: background 0.2s;
     }
 
-    .exam-item:hover {
-      background-color: #e9f0ff;
+    .course:hover {
+      background-color: #305a85;
+    }
+
+    #courses {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    #logout {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: crimson;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #greeting {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
-
-  <!-- Top right controls -->
-  <div class="top-controls">
-    <button onclick="toggleTheme()">🎨 Theme</button>
-    <button onclick="logout()">🔒 Logout</button>
-  </div>
-
-  <!-- Main Exam Display Area -->
-  <div class="exam-container">
-    <h2>Available Exams</h2>
-    <p><strong>Welcome, <span id="studentName">Student</span></strong></p>
-    <div id="examList">Loading exams...</div>
-  </div>
+  <button id="logout">Logout</button>
+  <h1>Available Exams</h1>
+  <div id="greeting"></div>
+  <div id="courses">Loading exams...</div>
 
   <script>
     const student = JSON.parse(localStorage.getItem("student"));
-    const examList = document.getElementById("examList");
-    const studentName = document.getElementById("studentName");
+    const coursesDiv = document.getElementById("courses");
+    const greeting = document.getElementById("greeting");
 
-    if (student && student.fullname) {
-      studentName.textContent = student.fullname;
-    }
-
-    // Load exams for the logged-in student
-    fetch(`https://testpro-mvh8.onrender.com/api/exams/available?department=${student.department}&level=${student.level}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.length === 0) {
-          examList.innerHTML = "<p>No exam available for your department or level.</p>";
-        } else {
-          examList.innerHTML = "";
-          data.forEach(exam => {
-            const div = document.createElement("div");
-            div.className = "exam-item";
-            div.innerHTML = `
-              <strong>${exam.course}</strong><br/>
-              <small>${exam.courseCode}</small><br/>
-              Duration: ${exam.duration} mins<br/>
-              Questions: ${exam.numQuestions}
-            `;
-            div.onclick = () => {
-              localStorage.setItem("selectedExam", JSON.stringify(exam));
-              window.location.href = "take-exam.html";
-            };
-            examList.appendChild(div);
-          });
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        examList.innerHTML = "<p>Error loading exams. Please try again.</p>";
-      });
-
-    function logout() {
-      localStorage.removeItem("student");
+    if (!student) {
       window.location.href = "student-login.html";
     }
 
-    function toggleTheme() {
-      document.body.classList.toggle("dark-theme");
-    }
+    greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
+
+    // Fetch exams filtered by department and level
+    fetch(`https://testpro-mvh8.onrender.com/api/exams?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`)
+      .then(res => res.json())
+      .then(data => {
+        coursesDiv.innerHTML = "";
+
+        if (data.length === 0) {
+          coursesDiv.textContent = "No available exams for your department and level.";
+          return;
+        }
+
+        data.forEach(exam => {
+          const div = document.createElement("div");
+          div.className = "course";
+          div.innerHTML = `
+            <strong>${exam.course} (${exam.courseCode})</strong><br/>
+            Duration: ${exam.duration} mins<br/>
+            Total Questions: ${exam.questions.length}
+          `;
+          div.onclick = () => {
+            localStorage.setItem("selectedExam", JSON.stringify(exam));
+            window.location.href = "take-exam.html";
+          };
+          coursesDiv.appendChild(div);
+        });
+      })
+      .catch(() => {
+        coursesDiv.textContent = "Error loading exams. Please try again.";
+      });
+
+    document.getElementById("logout").onclick = () => {
+      localStorage.removeItem("student");
+      window.location.href = "student-login.html";
+    };
   </script>
 </body>
 </html>
