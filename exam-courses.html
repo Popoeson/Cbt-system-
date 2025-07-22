@@ -1,108 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Available Exams</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --primary-color: #0074cc;
+      --shadow-color: #0074cc;
+      --item-hover: #e0e0e0;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --primary-color: #00ffcc;
+      --shadow-color: #00ffcc;
+      --item-hover: #2a2a2a;
+    }
+
     body {
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: white;
-      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
 
-    h1 {
-      text-align: center;
-    }
-
-    .course {
-      background-color: #1e3a5f;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .course:hover {
-      background-color: #305a85;
-    }
-
-    #courses {
-      max-width: 600px;
-      margin: auto;
-    }
-
-    #logout {
+    .toggle {
       position: absolute;
       top: 20px;
       right: 20px;
-      background: crimson;
+    }
+
+    .toggle button {
+      padding: 8px 14px;
       border: none;
-      color: white;
-      padding: 8px 12px;
       border-radius: 5px;
+      background-color: var(--primary-color);
+      color: white;
       cursor: pointer;
     }
 
-    #greeting {
+    .toggle button:hover {
+      background-color: var(--text-color);
+      color: var(--primary-color);
+    }
+
+    h2 {
       text-align: center;
       margin-bottom: 30px;
-      font-size: 20px;
+      color: var(--primary-color);
+    }
+
+    #examList {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .exam-item {
+      background-color: var(--box-bg);
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      box-shadow: 0 0 10px var(--shadow-color);
+    }
+
+    .exam-item:hover {
+      background-color: var(--item-hover);
+      transform: scale(1.01);
     }
   </style>
 </head>
 <body>
-  <button id="logout">Logout</button>
-  <h1>Available Exams</h1>
-  <div id="greeting"></div>
-  <div id="courses">Loading exams...</div>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <h2>Select an Exam</h2>
+  <div id="examList">Loading...</div>
 
   <script>
-    const student = JSON.parse(localStorage.getItem("student"));
-    const coursesDiv = document.getElementById("courses");
-    const greeting = document.getElementById("greeting");
-
-    if (!student) {
-      window.location.href = "student-login.html";
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
     }
 
-    greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
 
-    // Fetch exams filtered by department and level
-    fetch(`https://testpro-mvh8.onrender.com/api/exams?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`)
-      .then(res => res.json())
-      .then(data => {
-        coursesDiv.innerHTML = "";
+      const student = JSON.parse(localStorage.getItem("student"));
+      if (!student) {
+        alert("Please login first.");
+        window.location.href = "student-login.html";
+      } else {
+        fetchExams();
+      }
+    });
 
-        if (data.length === 0) {
-          coursesDiv.textContent = "No available exams for your department and level.";
+    async function fetchExams() {
+      try {
+        const response = await fetch("https://cbt-system.onrender.com/api/questions/courses");
+        const data = await response.json();
+
+        const examList = document.getElementById("examList");
+        examList.innerHTML = "";
+
+        if (data?.courses?.length === 0) {
+          examList.innerHTML = "<p>No exams available.</p>";
           return;
         }
 
-        data.forEach(exam => {
+        data.courses.forEach(course => {
           const div = document.createElement("div");
-          div.className = "course";
-          div.innerHTML = `
-            <strong>${exam.course} (${exam.courseCode})</strong><br/>
-            Duration: ${exam.duration} mins<br/>
-            Total Questions: ${exam.questions.length}
-          `;
-          div.onclick = () => {
-            localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "take-exam.html";
-          };
-          coursesDiv.appendChild(div);
+          div.className = "exam-item";
+          div.textContent = `${course.title} (${course.code})`;
+          div.addEventListener("click", () => {
+            localStorage.setItem("courseTitle", course.title);
+            localStorage.setItem("courseCode", course.code);
+            window.location.href = "exam.html";
+          });
+          examList.appendChild(div);
         });
-      })
-      .catch(() => {
-        coursesDiv.textContent = "Error loading exams. Please try again.";
-      });
 
-    document.getElementById("logout").onclick = () => {
-      localStorage.removeItem("student");
-      window.location.href = "student-login.html";
-    };
+      } catch (err) {
+        console.error("Failed to fetch courses:", err);
+        document.getElementById("examList").innerHTML = "<p>Error loading exams.</p>";
+      }
+    }
   </script>
 </body>
 </html>
