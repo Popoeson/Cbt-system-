@@ -6,162 +6,136 @@
   <title>Available Exams</title>
   <style>
     body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: #ffffff;
-  transition: background-color 0.3s, color 0.3s;
-}
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-body.light-theme {
-  background-color: #f9f9f9;
-  color: #333333;
-}
+    /* Top right buttons */
+    .top-controls {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 20px;
+      gap: 10px;
+    }
 
-.exam-card {
-  background-color: #1e1e1e;
-  color: #ffffff;
-  margin: 15px auto;
-  padding: 20px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.6);
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
+    .top-controls button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
 
-.exam-card:hover {
-  transform: scale(1.02);
-}
+    .top-controls button:hover {
+      background-color: #0056b3;
+    }
 
-body.light-theme .exam-card {
-  background-color: #ffffff;
-  color: #000000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+    /* Center content */
+    .exam-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
 
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+    .exam-container h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #007bff;
+    }
 
-button:hover {
-  opacity: 0.9;
-}
+    .exam-container p {
+      margin-bottom: 20px;
+      font-weight: 500;
+      font-size: 16px;
+    }
 
-body.light-theme button {
-  background-color: #007bff;
-  color: white;
-}
+    .exam-item {
+      background-color: #fff;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .exam-item:hover {
+      background-color: #e9f0ff;
+    }
   </style>
 </head>
 <body>
-  <div class="toggle">
-    <button onclick="toggleTheme()">🌓 Theme</button>
-    <button onclick="logout()">🚪 Logout</button>
+
+  <!-- Top right controls -->
+  <div class="top-controls">
+    <button onclick="toggleTheme()">🎨 Theme</button>
+    <button onclick="logout()">🔒 Logout</button>
   </div>
 
-  <div class="container">
-    <h1>Available Exams</h1>
-    <h4 id="studentName"></h4>
-    <div id="examList"></div>
+  <!-- Main Exam Display Area -->
+  <div class="exam-container">
+    <h2>Available Exams</h2>
+    <p><strong>Welcome, <span id="studentName">Student</span></strong></p>
+    <div id="examList">Loading exams...</div>
   </div>
 
   <script>
-    const student = localStorage.getItem("student");
-    const admin = localStorage.getItem("admin");
-
-    // Prevent conflicting sessions
-    if (student && admin) {
-      alert("Conflicting session detected. Please logout and login correctly.");
-      localStorage.clear();
-      window.location.href = "student-login.html";
-    }
-
-    if (!student && !admin) {
-      window.location.href = "student-login.html";
-    }
-
-    // Show welcome name
-    const parsedStudent = student && JSON.parse(student);
-    if (parsedStudent?.name) {
-      document.getElementById("studentName").textContent = `Welcome, ${parsedStudent.name}`;
-    }
-
+    const student = JSON.parse(localStorage.getItem("student"));
     const examList = document.getElementById("examList");
+    const studentName = document.getElementById("studentName");
 
-    async function fetchExams() {
-      try {
-        const res = await fetch("https://cbt-system.onrender.com/api/questions/courses");
-        const data = await res.json();
+    if (student && student.fullname) {
+      studentName.textContent = student.fullname;
+    }
 
-        if (!data || !data.courses || data.courses.length === 0) {
-          examList.innerHTML = "<p>No exams available.</p>";
-          return;
-        }
-
-        const user = JSON.parse(student || admin);
-
-        const filteredCourses = student
-          ? data.courses.filter(course =>
-              course.department === user.department &&
-              (!course.level || course.level === user.level)
-            )
-          : data.courses;
-
-        if (filteredCourses.length === 0) {
+    // Load exams for the logged-in student
+    fetch(`https://cbt-system.onrender.com/api/exams/available?department=${student.department}&level=${student.level}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length === 0) {
           examList.innerHTML = "<p>No exam available for your department or level.</p>";
-          return;
-        }
-
-        filteredCourses.forEach(course => {
-          const card = document.createElement("div");
-          card.className = "exam-card";
-          card.innerHTML = `<h3>${course.title}</h3><p>${course.code}</p>`;
-          card.addEventListener("click", () => {
-            localStorage.setItem("selectedCourseTitle", course.title);
-            localStorage.setItem("selectedCourseCode", course.code);
-            window.location.href = "exam.html";
+        } else {
+          examList.innerHTML = "";
+          data.forEach(exam => {
+            const div = document.createElement("div");
+            div.className = "exam-item";
+            div.innerHTML = `
+              <strong>${exam.course}</strong><br/>
+              <small>${exam.courseCode}</small><br/>
+              Duration: ${exam.duration} mins<br/>
+              Questions: ${exam.numQuestions}
+            `;
+            div.onclick = () => {
+              localStorage.setItem("selectedExam", JSON.stringify(exam));
+              window.location.href = "take-exam.html";
+            };
+            examList.appendChild(div);
           });
-          examList.appendChild(card);
-        });
-
-      } catch (err) {
+        }
+      })
+      .catch(err => {
         console.error(err);
-        examList.innerHTML = "<p>Unable to load exams. Please check your internet connection or try again later.</p>";
-      }
-    }
+        examList.innerHTML = "<p>Error loading exams. Please try again.</p>";
+      });
 
-    fetchExams();
-
-    // Theme toggle
-    const toggleTheme = () => {
-      const currentTheme = localStorage.getItem("theme");
-      if (currentTheme === "light") {
-        document.body.classList.remove("light-theme");
-        localStorage.setItem("theme", "dark");
-      } else {
-        document.body.classList.add("light-theme");
-        localStorage.setItem("theme", "light");
-      }
-    };
-
-    // Load theme on init
-    if (localStorage.getItem("theme") === "light") {
-      document.body.classList.add("light-theme");
-    }
-
-    // Logout function
-    const logout = () => {
+    function logout() {
       localStorage.removeItem("student");
-      localStorage.removeItem("admin");
       window.location.href = "student-login.html";
-    };
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+    }
   </script>
 </body>
 </html>
