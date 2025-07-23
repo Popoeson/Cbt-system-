@@ -89,63 +89,58 @@
   <div id="examList">Loading...</div>
 
   <script>
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
-    }
+  const student = JSON.parse(localStorage.getItem("student"));
+  const admin = JSON.parse(localStorage.getItem("admin"));
+  const coursesDiv = document.getElementById("courses");
+  const greeting = document.getElementById("greeting");
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedTheme = localStorage.getItem("cbtTheme");
-      if (savedTheme === "dark") document.body.classList.add("dark");
+  let apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
-      const student = JSON.parse(localStorage.getItem("student"));
-      if (!student) {
-        alert("Please login first.");
-        window.location.href = "student-login.html";
-      } else {
-        fetchExams(student.department?.toLowerCase(), student.level?.toUpperCase());
+  if (student) {
+    greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
+    apiUrl += `?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`;
+  } else if (admin) {
+    greeting.textContent = `Admin Panel: Viewing all available exams`;
+    // No filter needed for admin
+  } else {
+    // No one logged in
+    window.location.href = "student-login.html"; // or redirect to admin login if preferred
+  }
+
+  fetch(apiUrl)
+    .then(res => res.json())
+    .then(data => {
+      coursesDiv.innerHTML = "";
+
+      if (data.length === 0) {
+        coursesDiv.textContent = "No available exams found.";
+        return;
       }
+
+      data.forEach(exam => {
+        const div = document.createElement("div");
+        div.className = "course";
+        div.innerHTML = `
+          <strong>${exam.course} (${exam.courseCode})</strong><br/>
+          Duration: ${exam.duration} mins<br/>
+          Total Questions: ${exam.questions.length}
+        `;
+        div.onclick = () => {
+          localStorage.setItem("selectedExam", JSON.stringify(exam));
+          window.location.href = "exam.html";
+        };
+        coursesDiv.appendChild(div);
+      });
+    })
+    .catch(() => {
+      coursesDiv.textContent = "Error loading exams. Please try again.";
     });
 
-    async function fetchExams(studentDept, studentLevel) {
-      try {
-        const response = await fetch("https://testpro-mvh8.onrender.com/api/questions/courses");
-        const data = await response.json();
-
-        const examList = document.getElementById("examList");
-        examList.innerHTML = "";
-
-        const exams = data?.courses || [];
-        const filtered = exams.filter(course => {
-          const courseDept = course.department?.toLowerCase().trim();
-          const courseLevel = course.level?.toUpperCase().replace(/\s+/g, "");
-          const stdLevel = studentLevel?.replace(/\s+/g, "");
-
-          return courseDept === studentDept && courseLevel === stdLevel;
-        });
-
-        if (filtered.length === 0) {
-          examList.innerHTML = "<p>No exams available for your department and level.</p>";
-          return;
-        }
-
-        filtered.forEach(course => {
-          const div = document.createElement("div");
-          div.className = "exam-item";
-          div.textContent = `${course.title} (${course.code})`;
-          div.addEventListener("click", () => {
-            localStorage.setItem("courseTitle", course.title);
-            localStorage.setItem("courseCode", course.code);
-            window.location.href = "exam.html";
-          });
-          examList.appendChild(div);
-        });
-
-      } catch (err) {
-        console.error("Failed to fetch courses:", err);
-        document.getElementById("examList").innerHTML = "<p>Error loading exams.</p>";
-      }
-    }
+  document.getElementById("logout").onclick = () => {
+    localStorage.removeItem("student");
+    localStorage.removeItem("admin");
+    window.location.href = "student-login.html";
+  };
   </script>
 </body>
 </html>
