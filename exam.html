@@ -179,7 +179,6 @@
     if (savedTheme === "dark") document.body.classList.add("dark");
   });
 
-  // Get student and selected exam from localStorage
   const student = JSON.parse(localStorage.getItem("student"));
   const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
 
@@ -190,7 +189,7 @@
 
   const courseCode = selectedExam.courseCode;
 
-  // Display student info
+  // Set student info
   document.getElementById("student-name").textContent = student.name;
   document.getElementById("student-matric").textContent = student.matric;
   document.getElementById("student-department").textContent = student.department;
@@ -201,20 +200,29 @@
   const examTitle = document.getElementById("exam-title");
 
   let timeLeft = 0;
-  let timerInterval;
+  let timerInterval = null;
 
-  // Fetch exam questions
-  fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`)
-  
+  // ✅ First fetch exam duration
+  fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`)
     .then(res => res.json())
     .then(data => {
-      if (!data || !data.questions || data.questions.length === 0) {
-        questionsContainer.innerHTML = "<p>No questions found for this exam.</p>";
+      if (!data.exam || !data.exam.duration) {
+        alert("Exam not found or missing duration.");
         return;
       }
 
-      examTitle.textContent = `${data.course} (${data.courseCode})`;
-      timeLeft = data.time * 60; // convert minutes to seconds
+      examTitle.textContent = `${data.exam.course} (${data.exam.courseCode})`;
+      timeLeft = data.exam.duration * 60; // convert minutes to seconds
+
+      // ✅ Now fetch questions
+      return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.questions || data.questions.length === 0) {
+        questionsContainer.innerHTML = "<p>No questions found for this exam.</p>";
+        return;
+      }
 
       data.questions.forEach((q, index) => {
         const questionDiv = document.createElement("div");
@@ -232,7 +240,8 @@
       startTimer();
     })
     .catch(err => {
-      questionsContainer.innerHTML = "<p>Error loading questions.</p>";
+      console.error("Error loading exam or questions:", err);
+      questionsContainer.innerHTML = "<p>Error loading exam or questions.</p>";
     });
 
   // Timer
@@ -251,7 +260,7 @@
     }, 1000);
   }
 
-  // Auto-submit if user switches tab
+  // Auto-submit on tab leave
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       alert("You left the exam tab. Submitting your answers...");
@@ -259,6 +268,7 @@
     }
   });
 
+  // Submit answers
   function submitExam() {
     clearInterval(timerInterval);
 
@@ -288,16 +298,18 @@
     })
       .then(res => res.json())
       .then(data => {
-        alert("Exam submitted successfully!");
+        alert("✅ Exam submitted successfully!");
         localStorage.removeItem("selectedExam");
         window.location.href = "exam-courses.html";
       })
       .catch(err => {
-        alert("Failed to submit exam. Please try again.");
+        alert("❌ Failed to submit exam. Please try again.");
       });
   }
 
+  // Bind to manual submit button
   document.getElementById("submitBtn").onclick = submitExam;
 </script>
+
 </body>
   </html>
