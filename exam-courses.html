@@ -54,7 +54,7 @@
 
     h2 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
       color: var(--primary-color);
     }
 
@@ -63,7 +63,7 @@
       margin: 0 auto;
     }
 
-    .exam-item {
+    .course {
       background-color: var(--box-bg);
       padding: 15px 20px;
       border-radius: 10px;
@@ -73,7 +73,7 @@
       box-shadow: 0 0 10px var(--shadow-color);
     }
 
-    .exam-item:hover {
+    .course:hover {
       background-color: var(--item-hover);
       transform: scale(1.01);
     }
@@ -86,61 +86,71 @@
   </div>
 
   <h2>Select an Exam</h2>
+
+  <div style="text-align:center; margin-bottom: 20px;">
+    <div id="greeting" style="margin-bottom:10px;"></div>
+    <button id="logout" style="padding: 8px 14px; background: red; color: white; border: none; border-radius: 5px; cursor: pointer;">Logout</button>
+  </div>
+
   <div id="examList">Loading...</div>
 
   <script>
-  const student = JSON.parse(localStorage.getItem("student"));
-  const admin = JSON.parse(localStorage.getItem("admin"));
-  const coursesDiv = document.getElementById("courses");
-  const greeting = document.getElementById("greeting");
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
 
-  let apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
+    const student = JSON.parse(localStorage.getItem("student"));
+    const admin = JSON.parse(localStorage.getItem("admin"));
+    const coursesDiv = document.getElementById("examList");
+    const greeting = document.getElementById("greeting");
 
-  if (student) {
-    greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
-    apiUrl += `?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`;
-  } else if (admin) {
-    greeting.textContent = `Admin Panel: Viewing all available exams`;
-    // No filter needed for admin
-  } else {
-    // No one logged in
-    window.location.href = "student-login.html"; // or redirect to admin login if preferred
-  }
+    let apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
-  fetch(apiUrl)
-    .then(res => res.json())
-    .then(data => {
-      coursesDiv.innerHTML = "";
+    if (student) {
+      greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
+      apiUrl += `?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`;
+    } else if (admin) {
+      greeting.textContent = `Admin Panel: Viewing all available exams`;
+      // No filter needed for admin
+    } else {
+      // No one logged in
+      window.location.href = "student-login.html";
+    }
 
-      if (data.length === 0) {
-        coursesDiv.textContent = "No available exams found.";
-        return;
-      }
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        coursesDiv.innerHTML = "";
 
-      data.forEach(exam => {
-        const div = document.createElement("div");
-        div.className = "course";
-        div.innerHTML = `
-          <strong>${exam.course} (${exam.courseCode})</strong><br/>
-          Duration: ${exam.duration} mins<br/>
-          Total Questions: ${exam.questions.length}
-        `;
-        div.onclick = () => {
-          localStorage.setItem("selectedExam", JSON.stringify(exam));
-          window.location.href = "exam.html";
-        };
-        coursesDiv.appendChild(div);
+        if (data.length === 0) {
+          coursesDiv.textContent = "No available exams found.";
+          return;
+        }
+
+        data.forEach(exam => {
+          const div = document.createElement("div");
+          div.className = "course";
+          div.innerHTML = `
+            <strong>${exam.course} (${exam.courseCode})</strong><br/>
+            Duration: ${exam.duration} mins<br/>
+            Total Questions: ${exam.questions.length}
+          `;
+          div.onclick = () => {
+            localStorage.setItem("selectedExam", JSON.stringify(exam));
+            window.location.href = "exam.html";
+          };
+          coursesDiv.appendChild(div);
+        });
+      })
+      .catch(() => {
+        coursesDiv.textContent = "Error loading exams. Please try again.";
       });
-    })
-    .catch(() => {
-      coursesDiv.textContent = "Error loading exams. Please try again.";
-    });
 
-  document.getElementById("logout").onclick = () => {
-    localStorage.removeItem("student");
-    localStorage.removeItem("admin");
-    window.location.href = "student-login.html";
-  };
+    document.getElementById("logout").onclick = () => {
+      localStorage.removeItem("student");
+      localStorage.removeItem("admin");
+      window.location.href = "student-login.html";
+    };
   </script>
 </body>
 </html>
