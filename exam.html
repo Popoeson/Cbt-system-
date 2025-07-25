@@ -212,19 +212,21 @@
       }
     }, 1000);
   }
-
-  async function fetchExamDetails() {
-    try {
-      const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`);
-      const data = await res.json();
-      if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
-      timeLeft = data.exam.duration * 60;
-    } catch (err) {
-      console.error("Failed to fetch exam details:", err);
-      alert("Using fallback duration: 10 minutes");
-    } finally {
-      startTimer();
-    }
+  
+async function fetchExamDetails() {
+  try {
+    const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`);
+    const data = await res.json();
+    
+    if (!data || !data.duration) throw new Error("Invalid exam data");
+    
+    timeLeft = data.duration * 60;  // Use actual duration from DB
+  } catch (err) {
+    console.error("Failed to fetch exam details:", err);
+    alert("Using fallback duration: 10 minutes");
+  } finally {
+    startTimer();
+  }
   }
 
   async function fetchQuestions() {
