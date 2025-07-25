@@ -94,7 +94,7 @@
 
   <div id="examList">Loading...</div>
 
-  <script>
+<script>
   // Toggle dark/light mode
   function toggleTheme() {
     document.body.classList.toggle("dark");
@@ -105,31 +105,46 @@
   const coursesDiv = document.getElementById("examList");
   const greeting = document.getElementById("greeting");
 
-  // Optional: show greeting if student is logged in
+  // Show greeting if student is logged in
   if (student) {
-    greeting.textContent = `Welcome, ${student.fullName}`;
+    greeting.textContent = `Welcome, ${student.name}`;
   }
 
   const apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
-  // Fetch available exams
+  function normalize(text) {
+    return text.toLowerCase().replace(/\s+/g, "");
+  }
+
+  // Fetch and filter exams
   fetch(apiUrl)
     .then(res => res.json())
     .then(data => {
       coursesDiv.innerHTML = "";
 
-      if (data.length === 0) {
-        coursesDiv.textContent = "No available exams found.";
+      if (!student || !student.department || !student.level) {
+        coursesDiv.textContent = "Student data incomplete. Please log in again.";
         return;
       }
 
-      // Show only course title and code
-      data.forEach(exam => {
+      const studentDept = normalize(student.department);
+      const studentLevel = normalize(student.level);
+
+      const filteredExams = data.filter(exam => {
+        const examDept = normalize(exam.department);
+        const examLevel = normalize(exam.level);
+        return examDept === studentDept && examLevel === studentLevel;
+      });
+
+      if (filteredExams.length === 0) {
+        coursesDiv.textContent = "No exams available for your department and level.";
+        return;
+      }
+
+      filteredExams.forEach(exam => {
         const div = document.createElement("div");
         div.className = "course";
-        div.innerHTML = `
-          <strong>${exam.course} (${exam.courseCode})</strong>
-        `;
+        div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
         div.onclick = () => {
           localStorage.setItem("selectedExam", JSON.stringify(exam));
           window.location.href = "exam.html";
@@ -147,6 +162,6 @@
     localStorage.removeItem("admin");
     window.location.href = "student-login.html";
   };
-  </script>
+</script>
 </body>
 </html>
