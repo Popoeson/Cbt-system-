@@ -106,16 +106,6 @@
 
     let apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
-    if (student) {
-      greeting.textContent = `Welcome, ${student.name.toUpperCase()} | Dept: ${student.department}, Level: ${student.level}`;
-      apiUrl += `?department=${encodeURIComponent(student.department)}&level=${encodeURIComponent(student.level)}`;
-    } else if (admin) {
-      greeting.textContent = `Admin Panel: Viewing all available exams`;
-      // No filter needed for admin
-    } else {
-      // No one logged in
-      window.location.href = "student-login.html";
-    }
 
     fetch(apiUrl)
       .then(res => res.json())
