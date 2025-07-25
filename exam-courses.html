@@ -95,52 +95,58 @@
   <div id="examList">Loading...</div>
 
   <script>
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-    }
+  // Toggle dark/light mode
+  function toggleTheme() {
+    document.body.classList.toggle("dark");
+  }
 
-    const student = JSON.parse(localStorage.getItem("student"));
-    const admin = JSON.parse(localStorage.getItem("admin"));
-    const coursesDiv = document.getElementById("examList");
-    const greeting = document.getElementById("greeting");
+  const student = JSON.parse(localStorage.getItem("student"));
+  const admin = JSON.parse(localStorage.getItem("admin"));
+  const coursesDiv = document.getElementById("examList");
+  const greeting = document.getElementById("greeting");
 
-    let apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
+  // Optional: show greeting if student is logged in
+  if (student) {
+    greeting.textContent = `Welcome, ${student.fullName}`;
+  }
 
+  const apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
-    fetch(apiUrl)
-      .then(res => res.json())
-      .then(data => {
-        coursesDiv.innerHTML = "";
+  // Fetch available exams
+  fetch(apiUrl)
+    .then(res => res.json())
+    .then(data => {
+      coursesDiv.innerHTML = "";
 
-        if (data.length === 0) {
-          coursesDiv.textContent = "No available exams found.";
-          return;
-        }
+      if (data.length === 0) {
+        coursesDiv.textContent = "No available exams found.";
+        return;
+      }
 
-        data.forEach(exam => {
-          const div = document.createElement("div");
-          div.className = "course";
-          div.innerHTML = `
-            <strong>${exam.course} (${exam.courseCode})</strong><br/>
-            Duration: ${exam.duration} mins<br/>
-            Total Questions: ${exam.questions.length}
-          `;
-          div.onclick = () => {
-            localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "exam.html";
-          };
-          coursesDiv.appendChild(div);
-        });
-      })
-      .catch(() => {
-        coursesDiv.textContent = "Error loading exams. Please try again.";
+      // Show only course title and code
+      data.forEach(exam => {
+        const div = document.createElement("div");
+        div.className = "course";
+        div.innerHTML = `
+          <strong>${exam.course} (${exam.courseCode})</strong>
+        `;
+        div.onclick = () => {
+          localStorage.setItem("selectedExam", JSON.stringify(exam));
+          window.location.href = "exam.html";
+        };
+        coursesDiv.appendChild(div);
       });
+    })
+    .catch(() => {
+      coursesDiv.textContent = "Error loading exams. Please try again.";
+    });
 
-    document.getElementById("logout").onclick = () => {
-      localStorage.removeItem("student");
-      localStorage.removeItem("admin");
-      window.location.href = "student-login.html";
-    };
+  // Logout button handler
+  document.getElementById("logout").onclick = () => {
+    localStorage.removeItem("student");
+    localStorage.removeItem("admin");
+    window.location.href = "student-login.html";
+  };
   </script>
 </body>
 </html>
