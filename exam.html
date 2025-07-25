@@ -204,7 +204,9 @@
   let timerInterval;
 
   // Fetch exam questions
-  fetch(`https://testpro-mvh8.onrender.com/api/exams/questions/${courseCode}`)
+  fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`)
+  
+//  fetch(`https://testpro-mvh8.onrender.com/api/exams/questions/${courseCode}`)
     .then(res => res.json())
     .then(data => {
       if (!data || !data.questions || data.questions.length === 0) {
