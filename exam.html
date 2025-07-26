@@ -163,7 +163,7 @@
 <div id="nav-buttons" style="display:none;">
   <button id="prev-btn">Previous</button>
   <button id="next-btn">Next</button>
-  <button id="submit-btn" style="display: none;">Submit Exam</button>
+  <button id="submitBtn" style="display: none;">Submit Exam</button>
 </div>
 
 <div id="loading-overlay">⏳ Submitting your exam... Please wait. Your submission may be queued.</div>
@@ -195,14 +195,13 @@
   document.getElementById("student-department").textContent = student.department;
   document.getElementById("student-passport").src = student.passport;
 
-  const questionsContainer = document.getElementById("question-container");
+  const questionContainer = document.getElementById("question-container");
   const timerDisplay = document.getElementById("exam-timer");
-  const examTitle = document.getElementById("exam-title");
 
   let timeLeft = 0;
   let timerInterval = null;
 
-  // ✅ First fetch exam duration
+  // ✅ Fetch exam duration first
   fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`)
     .then(res => res.json())
     .then(data => {
@@ -211,8 +210,7 @@
         return;
       }
 
-      examTitle.textContent = `${data.exam.course} (${data.exam.courseCode})`;
-      timeLeft = data.exam.duration * 60; // convert minutes to seconds
+      timeLeft = data.exam.duration * 60;
 
       // ✅ Now fetch questions
       return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
@@ -220,60 +218,64 @@
     .then(res => res.json())
     .then(data => {
       if (!data.questions || data.questions.length === 0) {
-        questionsContainer.innerHTML = "<p>No questions found for this exam.</p>";
+        questionContainer.innerHTML = "<p>No questions found for this exam.</p>";
         return;
       }
 
+      questionContainer.innerHTML = ""; // Clear loader
       data.questions.forEach((q, index) => {
-        const questionDiv = document.createElement("div");
-        questionDiv.className = "question";
-        questionDiv.innerHTML = `
-          <p><strong>Q${index + 1}: ${q.question}</strong></p>
-          <label><input type="radio" name="q${index}" value="a"> A. ${q.a}</label><br>
-          <label><input type="radio" name="q${index}" value="b"> B. ${q.b}</label><br>
-          <label><input type="radio" name="q${index}" value="c"> C. ${q.c}</label><br>
-          <label><input type="radio" name="q${index}" value="d"> D. ${q.d}</label><br>
+        const div = document.createElement("div");
+        div.className = "question-block";
+        div.innerHTML = `
+          <div class="question-text"><strong>Q${index + 1}:</strong> ${q.question}</div>
+          <div class="options">
+            <label><input type="radio" name="q${index}" value="a"> A. ${q.a}</label>
+            <label><input type="radio" name="q${index}" value="b"> B. ${q.b}</label>
+            <label><input type="radio" name="q${index}" value="c"> C. ${q.c}</label>
+            <label><input type="radio" name="q${index}" value="d"> D. ${q.d}</label>
+          </div>
         `;
-        questionsContainer.appendChild(questionDiv);
+        questionContainer.appendChild(div);
       });
+
+      document.getElementById("nav-buttons").style.display = "flex";
+      document.getElementById("submitBtn").style.display = "inline-block";
 
       startTimer();
     })
     .catch(err => {
-      console.error("Error loading exam or questions:", err);
-      questionsContainer.innerHTML = "<p>Error loading exam or questions.</p>";
+      console.error("Error:", err);
+      questionContainer.innerHTML = "<p>Failed to load exam or questions.</p>";
     });
 
-  // Timer
   function startTimer() {
     timerInterval = setInterval(() => {
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
-        alert("Time is up! Submitting your answers...");
+        alert("⏰ Time is up! Submitting...");
         submitExam();
       } else {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        const min = Math.floor(timeLeft / 60);
+        const sec = timeLeft % 60;
+        timerDisplay.textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
         timeLeft--;
       }
     }, 1000);
   }
 
-  // Auto-submit on tab leave
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      alert("You left the exam tab. Submitting your answers...");
+      alert("You left the exam tab. Submitting...");
       submitExam();
     }
   });
 
-  // Submit answers
   function submitExam() {
     clearInterval(timerInterval);
+    document.getElementById("loading-overlay").style.display = "block";
 
     const answers = [];
-    const questions = document.querySelectorAll(".question");
+    const questions = document.querySelectorAll(".question-block");
 
     questions.forEach((q, index) => {
       const selected = q.querySelector(`input[name="q${index}"]:checked`);
@@ -282,9 +284,7 @@
 
     fetch("https://testpro-mvh8.onrender.com/api/submissions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: student.name,
         matric: student.matric,
@@ -297,19 +297,20 @@
       }),
     })
       .then(res => res.json())
-      .then(data => {
+      .then(() => {
         alert("✅ Exam submitted successfully!");
         localStorage.removeItem("selectedExam");
         window.location.href = "exam-courses.html";
       })
-      .catch(err => {
-        alert("❌ Failed to submit exam. Please try again.");
+      .catch(() => {
+        alert("❌ Submission failed. Please try again.");
+      })
+      .finally(() => {
+        document.getElementById("loading-overlay").style.display = "none";
       });
   }
 
-  // Bind to manual submit button
   document.getElementById("submitBtn").onclick = submitExam;
 </script>
 </body>
-                                                         </html>
-  
+  </html>
