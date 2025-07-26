@@ -211,43 +211,42 @@
       }
 
       timeLeft = data.exam.duration * 60;
+// ✅ Now fetch questions
+return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`)
+  .then(res => res.json())
+  .then(data => {
+    const questions = data.questions || data; // handles both { questions: [...] } and [...] format
 
-      // ✅ Now fetch questions
-      return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.questions || data.questions.length === 0) {
-        questionContainer.innerHTML = "<p>No questions found for this exam.</p>";
-        return;
-      }
+    if (!questions || questions.length === 0) {
+      questionContainer.innerHTML = "<p>No questions found for this exam.</p>";
+      return;
+    }
 
-      questionContainer.innerHTML = ""; // Clear loader
-      data.questions.forEach((q, index) => {
-        const div = document.createElement("div");
-        div.className = "question-block";
-        div.innerHTML = `
-          <div class="question-text"><strong>Q${index + 1}:</strong> ${q.question}</div>
-          <div class="options">
-            <label><input type="radio" name="q${index}" value="a"> A. ${q.a}</label>
-            <label><input type="radio" name="q${index}" value="b"> B. ${q.b}</label>
-            <label><input type="radio" name="q${index}" value="c"> C. ${q.c}</label>
-            <label><input type="radio" name="q${index}" value="d"> D. ${q.d}</label>
-          </div>
-        `;
-        questionContainer.appendChild(div);
-      });
+    questionContainer.innerHTML = ""; // Clear loading indicator
 
-      document.getElementById("nav-buttons").style.display = "flex";
-      document.getElementById("submitBtn").style.display = "inline-block";
-
-      startTimer();
-    })
-    .catch(err => {
-      console.error("Error:", err);
-      questionContainer.innerHTML = "<p>Failed to load exam or questions.</p>";
+    questions.forEach((question, index) => {
+      const div = document.createElement("div");
+      div.className = "question-block";
+      div.innerHTML = `
+        <p><strong>Q${index + 1}.</strong> ${question.questionText}</p>
+        <label><input type="radio" name="q${index}" value="a"> A. ${question.options.a}</label><br>
+        <label><input type="radio" name="q${index}" value="b"> B. ${question.options.b}</label><br>
+        <label><input type="radio" name="q${index}" value="c"> C. ${question.options.c}</label><br>
+        <label><input type="radio" name="q${index}" value="d"> D. ${question.options.d}</label><br>
+      `;
+      questionContainer.appendChild(div);
     });
 
+    document.getElementById("nav-buttons").style.display = "flex";
+    document.getElementById("submitBtn").style.display = "inline-block";
+
+    startTimer();
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    questionContainer.innerHTML = "<p>Failed to load exam or questions.</p>";
+  });
+      
   function startTimer() {
     timerInterval = setInterval(() => {
       if (timeLeft <= 0) {
