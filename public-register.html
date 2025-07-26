@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Public Registration</title>
+  <style>
+     :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --input-bg: #f0f0f0;
+      --accent: #007bff;
+      --shadow: rgba(0, 123, 255, 0.5);
+      -- btn-bg: #007bff;
+      --btn-hover: #0056b3;
+    }
+
+    body.dark {
+      --bg: #000000;
+      --text: #ffffff;
+      --input-bg: #1e1e1e;
+      --shadow: rgba(0, 123, 255, 0.6);
+       --btn-bg: #007bff;
+      --btn-hover: #0056b3;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+     .toggle {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+    }
+
+    .toggle button {
+      background: var(--btn-bg);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    form {
+      background-color: var(--input-bg);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--shadow);
+      width: 90%;
+      max-width: 420px;
+      color: var(--text);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      background-color: #fff;
+    }
+
+    body.dark input,
+    body.dark select {
+      background-color: #2c2c2c;
+      color: white;
+    }
+
+    input::placeholder {
+      color: #888;
+    }
+
+    input[readonly] {
+      background-color: #e0e0e0;
+      color: #555;
+    }
+
+    .toggle-password {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--accent);
+      text-align: right;
+      display: block;
+      margin-top: -8px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: white;
+      font-weight: bold;
+      transition: background-color 0.3s;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <form id="registerForm" enctype="multipart/form-data">
+    <h2>Public Registration</h2>
+
+    <input type="text" id="token" name="token" readonly placeholder="Token" />
+    <input type="text" id="name" placeholder="Full Name" required />
+
+    <input type="email" id="email" placeholder="Email Address" required autocapitalize="off" />
+    <input type="tel" id="phone" placeholder="Phone Number" required />
+
+    <input type="password" id="password" placeholder="Password" required />
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+    <span class="toggle-password" onclick="togglePassword(this)">Show</span>
+
+    <label>
+      Passport 
+      <input type="file" id="passport" accept="image/*" required />
+    </label>
+
+    <button type="submit" id="registerBtn">Register</button>
+    <div class="spinner" id="spinner" style="display:none;">⏳ Registering, please wait...</div>
+  </form>
+
+  <script>
+    function togglePassword(span) {
+      const pwd = document.getElementById("password");
+      const confirm = document.getElementById("confirmPassword");
+      const isPassword = pwd.type === "password";
+      pwd.type = confirm.type = isPassword ? "text" : "password";
+      span.textContent = isPassword ? "Hide" : "Show";
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+
+      const token = localStorage.getItem("validToken");
+      if (!token) {
+        window.location.href = "token-validate.html";
+        return;
+      }
+      document.getElementById("token").value = token;
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const passport = document.getElementById("passport").files[0];
+      const token = document.getElementById("token").value;
+
+      if (!passport) return alert("Please upload a passport photo.");
+      if (!email.includes("@") || !email.includes(".")) return alert("Enter a valid email.");
+      if (password !== confirmPassword) return alert("Passwords do not match.");
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("password", password);
+      formData.append("confirmPassword", confirmPassword);
+      formData.append("passport", passport);
+      formData.append("token", token);
+
+      const registerBtn = document.getElementById("registerBtn");
+      const spinner = document.getElementById("spinner");
+      registerBtn.disabled = true;
+      spinner.style.display = "block";
+
+      try {
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/public/register", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Registration failed");
+          throw new Error(data.message);
+        }
+
+        alert("Registration successful!");
+        localStorage.removeItem("validToken");
+        window.location.href = "public-login.html";
+      } catch (err) {
+        console.error("Registration error:", err);
+        alert("An error occurred. Try again.");
+      } finally {
+        registerBtn.disabled = false;
+        spinner.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
