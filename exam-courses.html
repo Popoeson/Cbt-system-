@@ -105,9 +105,11 @@
   const coursesDiv = document.getElementById("examList");
   const greeting = document.getElementById("greeting");
 
-  // Show greeting if student is logged in
+  // Set greeting
   if (student) {
     greeting.textContent = `Welcome, ${student.name}`;
+  } else if (admin) {
+    greeting.textContent = `Admin Panel`;
   }
 
   const apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
@@ -116,41 +118,66 @@
     return text.toLowerCase().replace(/\s+/g, "");
   }
 
-  // Fetch and filter exams
+  // Fetch exams
   fetch(apiUrl)
     .then(res => res.json())
     .then(data => {
       coursesDiv.innerHTML = "";
 
-      if (!student || !student.department || !student.level) {
-        coursesDiv.textContent = "Student data incomplete. Please log in again.";
-        return;
+      // If student is logged in, filter by department and level
+      if (student) {
+        if (!student.department || !student.level) {
+          coursesDiv.textContent = "Student data incomplete. Please log in again.";
+          return;
+        }
+
+        const studentDept = normalize(student.department);
+        const studentLevel = normalize(student.level);
+
+        const filteredExams = data.filter(exam => {
+          const examDept = normalize(exam.department);
+          const examLevel = normalize(exam.level);
+          return examDept === studentDept && examLevel === studentLevel;
+        });
+
+        if (filteredExams.length === 0) {
+          coursesDiv.textContent = "No exams available for your department and level.";
+          return;
+        }
+
+        filteredExams.forEach(exam => {
+          const div = document.createElement("div");
+          div.className = "course";
+          div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
+          div.onclick = () => {
+            localStorage.setItem("selectedExam", JSON.stringify(exam));
+            window.location.href = "exam.html";
+          };
+          coursesDiv.appendChild(div);
+        });
+
+      } else if (admin) {
+        // If admin is logged in, show all exams
+        if (data.length === 0) {
+          coursesDiv.textContent = "No exams available.";
+          return;
+        }
+
+        data.forEach(exam => {
+          const div = document.createElement("div");
+          div.className = "course";
+          div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
+          div.onclick = () => {
+            localStorage.setItem("selectedExam", JSON.stringify(exam));
+            window.location.href = "exam.html";
+          };
+          coursesDiv.appendChild(div);
+        });
+
+      } else {
+        // Neither student nor admin
+        coursesDiv.textContent = "Please log in to view exams.";
       }
-
-      const studentDept = normalize(student.department);
-      const studentLevel = normalize(student.level);
-
-      const filteredExams = data.filter(exam => {
-        const examDept = normalize(exam.department);
-        const examLevel = normalize(exam.level);
-        return examDept === studentDept && examLevel === studentLevel;
-      });
-
-      if (filteredExams.length === 0) {
-        coursesDiv.textContent = "No exams available for your department and level.";
-        return;
-      }
-
-      filteredExams.forEach(exam => {
-        const div = document.createElement("div");
-        div.className = "course";
-        div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
-        div.onclick = () => {
-          localStorage.setItem("selectedExam", JSON.stringify(exam));
-          window.location.href = "exam.html";
-        };
-        coursesDiv.appendChild(div);
-      });
     })
     .catch(() => {
       coursesDiv.textContent = "Error loading exams. Please try again.";
