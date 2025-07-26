@@ -180,7 +180,8 @@
   });
 
   const student = JSON.parse(localStorage.getItem("student"));
-  const courseCode = localStorage.getItem("courseCode");
+  const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
+  const courseCode = selectedExam?.courseCode;
 
   if (!student || !courseCode) {
     alert("Missing student or course data. Redirecting...");
@@ -309,7 +310,7 @@
         alert(data.message || "Submitted.");
       }
 
-      localStorage.removeItem("courseCode");
+      localStorage.removeItem("selectedExam");
       localStorage.removeItem("student");
       window.location.href = "student-login.html";
     })
