@@ -299,16 +299,12 @@
       document.getElementById("loading-overlay").style.display = "none";
 
       if (data.message?.toLowerCase().includes("already")) {
-        alert(data.message);
-      } else if (data.message?.toLowerCase().includes("success")) {
-        const ca = data.caScore ?? "N/A";
-        const exam = data.score ?? "N/A";
-        const total = data.totalScore ?? (ca !== "N/A" && exam !== "N/A" ? ca + exam : "N/A");
-
-        alert(`✅ ${data.message}\n\n📚 CA Score: ${ca}\n📝 Exam Score: ${exam}\n🧮 Total Score: ${total}`);
-      } else {
-        alert(data.message || "Submitted.");
-      }
+  alert(data.message);
+} else if (data.message?.toLowerCase().includes("success")) {
+  alert("✅ Exam submitted successfully.");
+} else {
+  alert(data.message || "Submitted.");
+  }
 
       localStorage.removeItem("selectedExam");
       localStorage.removeItem("student");
