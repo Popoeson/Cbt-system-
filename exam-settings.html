@@ -207,9 +207,17 @@ form.addEventListener("submit", async function (e) {
   const course = document.getElementById("course").value.trim();
   const courseCode = document.getElementById("courseCode").value.trim();
   const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
-  const department = document.getElementById("department").value.trim(); // ✅ fixed here
-  const level = document.getElementById("level").value.trim();           // ✅ and here
+  let department = document.getElementById("department").value.trim();
+  let level = document.getElementById("level").value.trim();
   const duration = parseInt(document.getElementById("duration").value.trim());
+
+  // ✅ Check if the user is a public user (based on token or login info)
+  const userType = localStorage.getItem("userType"); // Ensure you save this during login
+
+  if (userType === "public") {
+    department = "Public";
+    level = "Public";
+  }
 
   const examCourse = {
     course,
@@ -247,6 +255,5 @@ form.addEventListener("submit", async function (e) {
     [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = false);
   }
 });
-</script>
 </body>
   </html>
