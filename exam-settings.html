@@ -207,20 +207,18 @@ form.addEventListener("submit", async function (e) {
   const course = document.getElementById("course").value.trim();
   const courseCode = document.getElementById("courseCode").value.trim();
   const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
-  const rawDepartment = document.getElementById("department").value.trim();
-  const rawLevel = document.getElementById("level").value.trim();
+  const department = document.getElementById("department").value.trim(); // ✅ fixed here
+  const level = document.getElementById("level").value.trim();           // ✅ and here
   const duration = parseInt(document.getElementById("duration").value.trim());
 
-  
-
   const examCourse = {
-  course,
-  courseCode,
-  numQuestions,
-  department, // now always includes the selected value
-  level,      // now always includes the selected value
-  duration
-};
+    course,
+    courseCode,
+    numQuestions,
+    department,
+    level,
+    duration
+  };
 
   localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
@@ -250,6 +248,5 @@ form.addEventListener("submit", async function (e) {
   }
 });
 </script>
-
 </body>
   </html>
