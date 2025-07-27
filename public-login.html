@@ -242,18 +242,19 @@
         const data = await response.json();
 
         if (response.ok) {
-          const publicUser = {
-            name: data.publicUser.name,
-            email: data.publicUser.email,
-            phone: data.publicUser.phone,
-            school: data.publicUser.school,
-          };
-          localStorage.setItem("publicUser", JSON.stringify(publicUser));
-          window.location.href = "exam-courses.html";
-        } else {
-          message.textContent = data.message || "Login failed.";
-          message.style.color = "red";
-        }
+  const publicUser = {
+    id: data.user.id,
+    name: data.user.name,
+    email: data.user.email,
+    phone: data.user.phone,
+    type: data.user.type
+  };
+  localStorage.setItem("publicUser", JSON.stringify(publicUser));
+  window.location.href = "exam-courses.html";
+} else {
+  message.textContent = data.message || "Login failed.";
+  message.style.color = "red";
+}
       } catch (err) {
         message.textContent = "An error occurred during login: " + (err.message || "Unknown error");
         message.style.color = "red";
@@ -267,4 +268,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
