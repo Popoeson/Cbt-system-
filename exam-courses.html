@@ -102,6 +102,7 @@
 
   const student = JSON.parse(localStorage.getItem("student"));
   const admin = JSON.parse(localStorage.getItem("adminUser"));
+  const publicUser = JSON.parse(localStorage.getItem("publicUser"));
   const coursesDiv = document.getElementById("examList");
   const greeting = document.getElementById("greeting");
 
@@ -110,6 +111,8 @@
     greeting.textContent = `Welcome, ${student.name}`;
   } else if (admin) {
     greeting.textContent = `Admin Panel`;
+  } else if (publicUser) {
+    greeting.textContent = `Welcome, ${publicUser.name}`;
   }
 
   const apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
@@ -124,7 +127,6 @@
     .then(data => {
       coursesDiv.innerHTML = "";
 
-      // If student is logged in, filter by department and level
       if (student) {
         if (!student.department || !student.level) {
           coursesDiv.textContent = "Student data incomplete. Please log in again.";
@@ -157,7 +159,6 @@
         });
 
       } else if (admin) {
-        // If admin is logged in, show all exams
         if (data.length === 0) {
           coursesDiv.textContent = "No exams available.";
           return;
@@ -174,8 +175,27 @@
           coursesDiv.appendChild(div);
         });
 
+      } else if (publicUser) {
+        // Public users should not see any exams unless exams are specifically created for them
+        const filteredExams = data.filter(exam => normalize(exam.category) === "public");
+
+        if (filteredExams.length === 0) {
+          coursesDiv.textContent = "No public exams available at the moment.";
+          return;
+        }
+
+        filteredExams.forEach(exam => {
+          const div = document.createElement("div");
+          div.className = "course";
+          div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
+          div.onclick = () => {
+            localStorage.setItem("selectedExam", JSON.stringify(exam));
+            window.location.href = "exam.html";
+          };
+          coursesDiv.appendChild(div);
+        });
+
       } else {
-        // Neither student nor admin
         coursesDiv.textContent = "Please log in to view exams.";
       }
     })
@@ -187,6 +207,7 @@
   document.getElementById("logout").onclick = () => {
     localStorage.removeItem("student");
     localStorage.removeItem("admin");
+    localStorage.removeItem("publicUser");
     window.location.href = "student-login.html";
   };
 </script>
