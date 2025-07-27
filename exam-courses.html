@@ -177,8 +177,12 @@
 
       } else if (publicUser) {
         // Public users should not see any exams unless exams are specifically created for them
-        const filteredExams = data.filter(exam => normalize(exam.category) === "public");
 
+        const filteredExams = data.filter(exam =>
+  normalize(exam.department || "") === "public" ||
+  normalize(exam.level || "") === "public"
+);
+        
         if (filteredExams.length === 0) {
           coursesDiv.textContent = "No public exams available at the moment.";
           return;
