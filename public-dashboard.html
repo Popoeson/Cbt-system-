@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Public User Dashboard</title>
+  <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --header-color: #007bff;
+      --table-head: #ddd;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --header-color: #00bfff;
+      --table-head: #2a2a2a;
+      --button-bg: #00bfff;
+      --button-hover: #009fe0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+    }
+
+    .toggle button,
+    .download-btn {
+      padding: 10px 16px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 14px;
+    }
+
+    .toggle button:hover,
+    .download-btn:hover {
+      background-color: var(--button-hover);
+      color: white;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: var(--header-color);
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .user-table th, .user-table td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .user-table th {
+      background-color: var(--table-head);
+      color: var(--text-color);
+    }
+
+    img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .download-btn {
+      display: block;
+      margin: 20px auto;
+    }
+
+    #search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      background-color: var(--search-bg);
+      color: var(--text-color);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <h1>CBT Public User Dashboard</h1>
+
+  <button class="download-btn" onclick="downloadCSV()">📥 Download Public Users</button>
+
+  <h2>Registered Public Users</h2>
+  <input type="text" id="search" placeholder="Search by name, email, or phone..." />
+  <table class="user-table" id="publicTable">
+    <thead>
+      <tr>
+        <th>Passport</th>
+        <th>Full Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Institution</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+
+      fetchPublicUsers();
+
+      const searchInput = document.getElementById("search");
+      const tbody = document.querySelector("#publicTable tbody");
+
+      searchInput.addEventListener("input", () => {
+        const searchValue = searchInput.value.toLowerCase();
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach(row => {
+          const rowText = row.textContent.toLowerCase();
+          row.style.display = rowText.includes(searchValue) ? "" : "none";
+        });
+      });
+    });
+
+    async function fetchPublicUsers() {
+      try {
+        const res = await fetch("https://your-api-url.com/api/public/dashboard");
+        const data = await res.json();
+        const tableBody = document.querySelector("#publicTable tbody");
+        tableBody.innerHTML = "";
+
+        data.users.forEach(user => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${user.passport}" alt="Passport" /></td>
+            <td>${user.name}</td>
+            <td>${user.phone}</td>
+            <td>${user.email}</td>
+            <td>${user.institution || 'N/A'}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Failed to load public user data", error);
+      }
+    }
+
+    function downloadCSV() {
+      window.location.href = "https://your-api-url.com/api/public/download";
+    }
+  </script>
+</body>
+</html>
