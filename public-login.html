@@ -197,75 +197,86 @@
   </form>
 
   <script>
-  function togglePassword() {
-    const pwd = document.getElementById("password");
-    const toggle = document.querySelector(".toggle-password");
-    if (pwd.type === "password") {
-      pwd.type = "text";
-      toggle.textContent = "Hide";
+function togglePassword() {
+  const pwd = document.getElementById("password");
+  const toggle = document.querySelector(".toggle-password");
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    toggle.textContent = "Hide";
+  } else {
+    pwd.type = "password";
+    toggle.textContent = "Show";
+  }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const savedTheme = localStorage.getItem("cbtTheme");
+  if (savedTheme === "dark") document.body.classList.add("dark");
+});
+
+// ✅ Handle public login
+document.getElementById("publicLoginForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email");
+  const password = document.getElementById("password");
+  const spinner = document.getElementById("spinner");
+  const submitBtn = document.getElementById("submitBtn");
+  const message = document.getElementById("message");
+
+  spinner.style.display = "block";
+  email.disabled = true;
+  password.disabled = true;
+  submitBtn.disabled = true;
+  message.textContent = "";
+
+  try {
+    const response = await fetch("https://testpro-mvh8.onrender.com/api/public/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.value, password: password.value }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // ✅ Clear other users
+      localStorage.removeItem("student");
+      localStorage.removeItem("adminUser");
+      localStorage.removeItem("publicUser");
+
+      const publicUser = {
+        id: data.publicUser.id,
+        name: data.publicUser.name,
+        email: data.publicUser.email,
+        phone: data.publicUser.phone,
+        type: data.publicUser.type
+      };
+
+      localStorage.setItem("publicUser", JSON.stringify(publicUser));
+      localStorage.setItem("department", "public");
+      localStorage.setItem("level", "public");
+
+      // ✅ Redirect to exam courses
+      window.location.href = "exam-courses.html";
     } else {
-      pwd.type = "password";
-      toggle.textContent = "Show";
+      message.textContent = data.message || "Invalid email or password.";
     }
+  } catch (err) {
+    console.error("Login failed:", err);
+    message.textContent = "Server error. Please try again.";
+  } finally {
+    spinner.style.display = "none";
+    email.disabled = false;
+    password.disabled = false;
+    submitBtn.disabled = false;
   }
-
-  function toggleTheme() {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const savedTheme = localStorage.getItem("cbtTheme");
-    if (savedTheme === "dark") document.body.classList.add("dark");
-  });
-
-  // ✅ Handle public login
-  document.getElementById("publicLoginForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-    const spinner = document.getElementById("spinner");
-    const submitBtn = document.getElementById("submitBtn");
-    const message = document.getElementById("message");
-
-    spinner.style.display = "block";
-    email.disabled = true;
-    password.disabled = true;
-    submitBtn.disabled = true;
-
-    try {
-      const response = await fetch("https://testpro-mvh8.onrender.com/api/public/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.value, password: password.value }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-  // ✅ Clear other user types before setting public user
-  localStorage.removeItem("student");
-  localStorage.removeItem("adminUser");
-  localStorage.removeItem("publicUser");
-
-  const publicUser = {
-    id: data.publicUser.id,
-    name: data.publicUser.name,
-    email: data.publicUser.email,
-    phone: data.publicUser.phone,
-    type: data.publicUser.type
-  };
-
-  localStorage.setItem("publicUser", JSON.stringify(publicUser));
-
-  // ✅ Set department and level as 'public'
-  localStorage.setItem("department", "public");
-  localStorage.setItem("level", "public");
-
-  // ✅ Redirect to courses
-  window.location.href = "exam-courses.html";
-    }
+});
   </script>
 </body>
   </html>
