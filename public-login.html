@@ -243,11 +243,11 @@
 
         if (response.ok) {
   const publicUser = {
-    id: data.user.id,
-    name: data.user.name,
-    email: data.user.email,
-    phone: data.user.phone,
-    type: data.user.type
+    id: data.publicUser.id,
+    name: data.publicUser.name,
+    email: data.publicUser.email,
+    phone: data.publicUser.phone,
+    type: data.publicUser.type
   };
   localStorage.setItem("publicUser", JSON.stringify(publicUser));
   window.location.href = "exam-courses.html";
@@ -255,11 +255,13 @@
   message.textContent = data.message || "Login failed.";
   message.style.color = "red";
 }
+     
+      
       } catch (err) {
-        message.textContent = "An error occurred during login: " + (err.message || "Unknown error");
-        message.style.color = "red";
-        console.error("Login error:", err);
-      } finally {
+    alert("An error occurred during login: " + (err.message || "Unknown error"));
+}
+      
+      finally {
         spinner.style.display = "none";
         email.disabled = false;
         password.disabled = false;
