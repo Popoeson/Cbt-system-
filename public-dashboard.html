@@ -157,7 +157,7 @@
 
     async function fetchPublicUsers() {
       try {
-        const res = await fetch("https://your-api-url.com/api/public/dashboard");
+        const res = await fetch("https://testpro-mvh8.onrender.com/api/public-users/dashboard");
         const data = await res.json();
         const tableBody = document.querySelector("#publicTable tbody");
         tableBody.innerHTML = "";
