@@ -211,20 +211,16 @@ form.addEventListener("submit", async function (e) {
   const rawLevel = document.getElementById("level").value.trim();
   const duration = parseInt(document.getElementById("duration").value.trim());
 
-  const department = rawDepartment.replace(/\s+/g, " ").toUpperCase();
-  const level = rawLevel.replace(/\s+/g, "").toUpperCase();
-
-  const isGeneral = department === "PUBLIC" || level === "PUBLIC";
+  
 
   const examCourse = {
-    course,
-    courseCode,
-    numQuestions,
-    department: isGeneral ? null : department,
-    level: isGeneral ? null : level,
-    duration,
-    isGeneral
-  };
+  course,
+  courseCode,
+  numQuestions,
+  department, // now always includes the selected value
+  level,      // now always includes the selected value
+  duration
+};
 
   localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
@@ -256,4 +252,4 @@ form.addEventListener("submit", async function (e) {
 </script>
 
 </body>
-      </html>
+  </html>
