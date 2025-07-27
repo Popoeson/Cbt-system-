@@ -244,35 +244,28 @@
       const data = await response.json();
 
       if (response.ok) {
-        // ✅ Clear other user types before setting public user
-        localStorage.removeItem("student");
-        localStorage.removeItem("adminUser");
-        localStorage.removeItem("publicUser");
+  // ✅ Clear other user types before setting public user
+  localStorage.removeItem("student");
+  localStorage.removeItem("adminUser");
+  localStorage.removeItem("publicUser");
 
-        const publicUser = {
-          id: data.publicUser.id,
-          name: data.publicUser.name,
-          email: data.publicUser.email,
-          phone: data.publicUser.phone,
-          type: data.publicUser.type
-        };
+  const publicUser = {
+    id: data.publicUser.id,
+    name: data.publicUser.name,
+    email: data.publicUser.email,
+    phone: data.publicUser.phone,
+    type: data.publicUser.type
+  };
 
-        localStorage.setItem("publicUser", JSON.stringify(publicUser));
-        window.location.href = "exam-courses.html";
-      } else {
-        message.textContent = data.message || "Login failed.";
-        message.style.color = "red";
-      }
+  localStorage.setItem("publicUser", JSON.stringify(publicUser));
 
-    } catch (err) {
-      alert("An error occurred during login: " + (err.message || "Unknown error"));
-    } finally {
-      spinner.style.display = "none";
-      email.disabled = false;
-      password.disabled = false;
-      submitBtn.disabled = false;
+  // ✅ Set department and level as 'public'
+  localStorage.setItem("department", "public");
+  localStorage.setItem("level", "public");
+
+  // ✅ Redirect to courses
+  window.location.href = "exam-courses.html";
     }
-  });
   </script>
 </body>
   </html>
