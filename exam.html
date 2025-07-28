@@ -255,6 +255,10 @@
   function handleAnswer(index, qid, selectedOption) {
     answers[qid] = selectedOption;
   }
+//
+function renderQuestions() {
+  examContainer.innerHTML = "";
+  
 
   function startTimer() {
     const interval = setInterval(() => {
