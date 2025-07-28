@@ -217,48 +217,42 @@
   }
 
   // Load questions
-  function fetchQuestions() {
-    return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
-        questions = data.questions;
-        renderQuestions();
-        startTimer();
-      })
-      .catch(err => {
-        console.error("Failed to load questions:", err);
-        alert("Failed to load exam questions.");
-      });
+  
+  async function fetchQuestions() {
+    try {
+      const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
+      const data = await res.json();
+      questions = data.questions || [];
+
+      if (questions.length === 0) {
+        document.getElementById("question-container").innerHTML = "<p>No questions available.</p>";
+        return;
+      }
+
+      renderQuestion();
+      document.getElementById("nav-buttons").style.display = "flex";
+    } catch (err) {
+      console.error("Failed to load questions:", err);
+      document.getElementById("question-container").innerHTML = "<p>Error loading questions.</p>";
+    }
   }
 
-  function renderQuestions() {
-    examContainer.innerHTML = "";
-    questions.forEach((q, index) => {
-      const div = document.createElement("div");
-      div.className = "question";
-      div.innerHTML = `
-        <p><strong>Q${index + 1}:</strong> ${q.questionText}</p>
-        <div>
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    const container = document.getElementById("question-container");
+    container.innerHTML = `
+      <div class="question-block">
+        <div class="question-text">${currentIndex + 1}. ${q.questionText}</div>
+        <div class="options">
           ${Object.entries(q.options).map(([key, val]) => `
             <label>
-              <input type="radio" name="q${index}" value="${key}" onchange="handleAnswer(${index}, '${q._id}', '${key}')">
-              ${key.toUpperCase()}: ${val}
-            </label><br>
+              <input type="radio" name="option" value="${key}" 
+              ${answers[q._id] === key ? "checked" : ""}> ${key}. ${val}
+            </label>
           `).join("")}
         </div>
-      `;
-      examContainer.appendChild(div);
-    });
-  }
-
-  function handleAnswer(index, qid, selectedOption) {
-    answers[qid] = selectedOption;
-  }
-//
-function renderQuestions() {
-  examContainer.innerHTML = "";
-  
+      </div>
+    `;
 
   function startTimer() {
     const interval = setInterval(() => {
