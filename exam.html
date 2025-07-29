@@ -175,182 +175,183 @@
   }
 
   window.addEventListener("DOMContentLoaded", () => {
+    // Apply saved theme
     const savedTheme = localStorage.getItem("cbtTheme");
     if (savedTheme === "dark") document.body.classList.add("dark");
-  });
 
-  const student = JSON.parse(localStorage.getItem("student")) || JSON.parse(localStorage.getItem("publicUser"));
-  const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
-  const courseCode = selectedExam?.courseCode;
+    const student = JSON.parse(localStorage.getItem("student")) || JSON.parse(localStorage.getItem("publicUser"));
+    const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
+    const courseCode = selectedExam?.courseCode;
 
-  if (!student || !courseCode) {
-    alert("Missing student or course data. Redirecting...");
-    window.location.href = "exam-courses.html";
-    return; // Stop further execution
-  }
-
-  console.log("Selected Course Code:", courseCode);
-
-  // Show user info
-  document.getElementById("student-name").textContent = student.name || "Anonymous";
-  document.getElementById("student-matric").textContent = student.matric || "N/A";
-  document.getElementById("student-department").textContent = student.department || "Public";
-  document.getElementById("student-passport").src = student.passport || "default-avatar.png";
-
-  const examContainer = document.getElementById("exam-questions");
-  const timerDisplay = document.getElementById("exam-timer");
-
-  let questions = [];
-  let answers = {};
-  let timeLeft = 600;
-  let currentIndex = 0;
-
-  // Fetch exam duration
-  function fetchExamDetails() {
-    return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
-        timeLeft = data.exam.duration * 60;
-      })
-      .catch(err => {
-        console.error("Failed to fetch exam details:", err);
-        alert("Failed to get exam info. Using fallback duration (10 minutes).");
-        timeLeft = 600;
-      });
-  }
-
-  // Load questions
-  function fetchQuestions() {
-    if (!courseCode) {
-      alert("No course code selected.");
+    if (!student || !courseCode) {
+      alert("Missing student or course data. Redirecting...");
+      window.location.href = "exam-courses.html";
       return;
     }
 
-    return fetch(`https://testpro-mvh8.onrender.com/api/exams/${encodeURIComponent(courseCode)}/questions`)
-      .then(async res => {
-        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-        const text = await res.text();
-        console.log("Raw question response:", text);
+    console.log("Selected Course Code:", courseCode);
 
-        try {
-          const data = JSON.parse(text);
-          if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
-          questions = data.questions;
-          renderQuestion();
-          startTimer();
-        } catch (err) {
-          console.error("Failed to parse or load questions:", err);
-          alert("Failed to load exam questions.");
-        }
-      })
-      .catch(err => {
-        console.error("Failed to fetch questions:", err);
-        alert("Network or server error while loading questions.");
-      });
-  }
+    // Show user info
+    document.getElementById("student-name").textContent = student.name || "Anonymous";
+    document.getElementById("student-matric").textContent = student.matric || "N/A";
+    document.getElementById("student-department").textContent = student.department || "Public";
+    document.getElementById("student-passport").src = student.passport || "default-avatar.png";
 
-  function renderQuestion() {
-    const q = questions[currentIndex];
-    const container = document.getElementById("question-container");
-    container.innerHTML = `
-      <div class="question-block">
-        <div class="question-text">${currentIndex + 1}. ${q.questionText}</div>
-        <div class="options">
-          ${Object.entries(q.options).map(([key, val]) => `
-            <label>
-              <input type="radio" name="option" value="${key}" 
-              ${answers[q._id] === key ? "checked" : ""}> ${key}. ${val}
-            </label>
-          `).join("")}
-        </div>
-      </div>
-    `;
+    const examContainer = document.getElementById("exam-questions");
+    const timerDisplay = document.getElementById("exam-timer");
 
-    // Save selected answer
-    const radios = container.querySelectorAll("input[name='option']");
-    radios.forEach(radio => {
-      radio.addEventListener("change", (e) => {
-        answers[q._id] = e.target.value;
-      });
-    });
-  }
+    let questions = [];
+    let answers = {};
+    let timeLeft = 600;
+    let currentIndex = 0;
 
-  function startTimer() {
-    const interval = setInterval(() => {
-      const minutes = Math.floor(timeLeft / 60);
-      const seconds = timeLeft % 60;
-      timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-      timeLeft--;
+    // Fetch exam duration
+    function fetchExamDetails() {
+      return fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
+          timeLeft = data.exam.duration * 60;
+        })
+        .catch(err => {
+          console.error("Failed to fetch exam details:", err);
+          alert("Failed to get exam info. Using fallback duration (10 minutes).");
+          timeLeft = 600;
+        });
+    }
 
-      if (timeLeft < 0) {
-        clearInterval(interval);
-        submitExam();
+    // Load questions
+    function fetchQuestions() {
+      if (!courseCode) {
+        alert("No course code selected.");
+        return;
       }
-    }, 1000);
-  }
 
-  function submitExam() {
-    fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        matric: student.matric || "public",
-        name: student.name || "Anonymous",
-        department: student.department || "Public",
-        courseCode,
-        answers
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message || "Exam submitted successfully!");
-        localStorage.removeItem("selectedExam");
-        localStorage.removeItem("student");
-        localStorage.removeItem("publicUser");
-        window.location.href = "student-login.html";
-      })
-      .catch(err => {
-        alert("Error submitting exam.");
-        console.error(err);
+      return fetch(`https://testpro-mvh8.onrender.com/api/exams/${encodeURIComponent(courseCode)}/questions`)
+        .then(async res => {
+          if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+          const text = await res.text();
+          console.log("Raw question response:", text);
+
+          try {
+            const data = JSON.parse(text);
+            if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
+            questions = data.questions;
+            renderQuestion();
+            startTimer();
+          } catch (err) {
+            console.error("Failed to parse or load questions:", err);
+            alert("Failed to load exam questions.");
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch questions:", err);
+          alert("Network or server error while loading questions.");
+        });
+    }
+
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const container = document.getElementById("question-container");
+      container.innerHTML = `
+        <div class="question-block">
+          <div class="question-text">${currentIndex + 1}. ${q.questionText}</div>
+          <div class="options">
+            ${Object.entries(q.options).map(([key, val]) => `
+              <label>
+                <input type="radio" name="option" value="${key}" 
+                ${answers[q._id] === key ? "checked" : ""}> ${key}. ${val}
+              </label>
+            `).join("")}
+          </div>
+        </div>
+      `;
+
+      // Save selected answer
+      const radios = container.querySelectorAll("input[name='option']");
+      radios.forEach(radio => {
+        radio.addEventListener("change", (e) => {
+          answers[q._id] = e.target.value;
+        });
       });
-  }
-
-  document.getElementById("submit-btn").addEventListener("click", () => {
-    if (confirm("Are you sure you want to submit your exam?")) {
-      submitExam();
     }
-  });
 
-  // Auto-submit on tab change
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      alert("You switched tabs or minimized. Exam will be submitted.");
-      submitExam();
+    function startTimer() {
+      const interval = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        timeLeft--;
+
+        if (timeLeft < 0) {
+          clearInterval(interval);
+          submitExam();
+        }
+      }, 1000);
     }
-  });
 
-  // Check session status every 30 seconds
-  function checkSessionStatus() {
-    fetch("https://testpro-mvh8.onrender.com/api/schedule/session/status")
-      .then(res => res.json())
-      .then(data => {
-        if (!data.active) {
-          alert("Exam session has ended. You will be logged out.");
+    function submitExam() {
+      fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matric: student.matric || "public",
+          name: student.name || "Anonymous",
+          department: student.department || "Public",
+          courseCode,
+          answers
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || "Exam submitted successfully!");
+          localStorage.removeItem("selectedExam");
           localStorage.removeItem("student");
           localStorage.removeItem("publicUser");
           window.location.href = "student-login.html";
-        }
-      })
-      .catch(err => {
-        console.error("Session check failed:", err);
-      });
-  }
+        })
+        .catch(err => {
+          alert("Error submitting exam.");
+          console.error(err);
+        });
+    }
 
-  setInterval(checkSessionStatus, 30000);
+    document.getElementById("submit-btn").addEventListener("click", () => {
+      if (confirm("Are you sure you want to submit your exam?")) {
+        submitExam();
+      }
+    });
 
-  // Load exam info and questions
-  fetchExamDetails().then(fetchQuestions);
+    // Auto-submit on tab change
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        alert("You switched tabs or minimized. Exam will be submitted.");
+        submitExam();
+      }
+    });
+
+    // Check session status every 30 seconds
+    function checkSessionStatus() {
+      fetch("https://testpro-mvh8.onrender.com/api/schedule/session/status")
+        .then(res => res.json())
+        .then(data => {
+          if (!data.active) {
+            alert("Exam session has ended. You will be logged out.");
+            localStorage.removeItem("student");
+            localStorage.removeItem("publicUser");
+            window.location.href = "student-login.html";
+          }
+        })
+        .catch(err => {
+          console.error("Session check failed:", err);
+        });
+    }
+
+    setInterval(checkSessionStatus, 30000);
+
+    // Load exam info and questions
+    fetchExamDetails().then(fetchQuestions);
+  });
   </script>
 </body>
   </html>
