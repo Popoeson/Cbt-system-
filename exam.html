@@ -183,8 +183,9 @@
   const student = JSON.parse(localStorage.getItem("student"));
 const publicUser = JSON.parse(localStorage.getItem("publicUser"));
 const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
-
-if ((!student && !publicUser) || !selectedExam) {
+const courseCode = selectedExam?.courseCode;
+  
+if ((!student && !publicUser) || !selectedExam || !courseCode) {
   alert("Missing user or exam info. Redirecting...");
   window.location.href = "exam-courses.html"; // or the correct redirect page
 }
