@@ -180,12 +180,17 @@
   });
 
   const student = JSON.parse(localStorage.getItem("student"));
-  const courseCode = localStorage.getItem("courseCode");
+const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
+const courseCode = selectedExam?.courseCode;
 
-  if (!student || !courseCode) {
-    alert("Missing student or course data. Redirecting...");
-    window.location.href = "exam-courses.html";
-  }
+  if (!student || !selectedExam || !courseCode) {
+  alert("Missing student info or exam selection. Please return to the exam list.");
+  window.location.href = "exam-courses.html";
+      }
+ // if (!student || !courseCode) {
+  //  alert("Missing student or course data. Redirecting...");
+ //   window.location.href = "exam-courses.html";
+ // }
 
   document.getElementById("student-name").textContent = student.name;
   document.getElementById("student-matric").textContent = student.matric;
