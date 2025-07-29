@@ -191,7 +191,14 @@ if ((!student && !publicUser) || !selectedExam || !courseCode) {
 }
 
 const user = student || publicUser;
+  //
+const nameEl = document.getElementById("student-name");
+const matricEl = document.getElementById("student-matric");
+const deptEl = document.getElementById("student-department");
 
+if (nameEl) nameEl.textContent = user.fullName || user.name || "N/A";
+if (matricEl) matricEl.textContent = user.matricNumber || "---";
+if (deptEl) deptEl.textContent = user.department || "---";
 // Safely fill in the student/public user info
 document.getElementById("student-name").textContent = user.fullName || user.name || "N/A";
 document.getElementById("matric-number").textContent = user.matricNumber || "---";
