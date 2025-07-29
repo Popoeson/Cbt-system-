@@ -217,25 +217,30 @@
   }
 
   // Load questions
-  
-  async function fetchQuestions() {
-    try {
-      const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
-      const data = await res.json();
-      questions = data.questions || [];
-
-      if (questions.length === 0) {
-        document.getElementById("question-container").innerHTML = "<p>No questions available.</p>";
-        return;
-      }
-
-      renderQuestion();
-      document.getElementById("nav-buttons").style.display = "flex";
-    } catch (err) {
-      console.error("Failed to load questions:", err);
-      document.getElementById("question-container").innerHTML = "<p>Error loading questions.</p>";
-    }
+  function fetchQuestions() {
+  if (!courseCode) {
+    alert("No course code selected.");
+    return;
   }
+
+  return fetch(`https://testpro-mvh8.onrender.com/api/exams/${encodeURIComponent(courseCode)}/questions`)
+    .then(res => {
+      if (!res.ok) throw new Error("Network response not OK");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Fetched questions:", data);
+      if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
+      questions = data.questions;
+      renderQuestions();
+      startTimer();
+    })
+    .catch(err => {
+      console.error("Failed to load questions:", err);
+      alert("Failed to load exam questions.");
+    });
+    }
+  
 
   function renderQuestion() {
     const q = questions[currentIndex];
