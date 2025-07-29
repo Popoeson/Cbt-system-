@@ -179,17 +179,33 @@
     if (savedTheme === "dark") document.body.classList.add("dark");
   });
 
+
   const student = JSON.parse(localStorage.getItem("student"));
 const publicUser = JSON.parse(localStorage.getItem("publicUser"));
 const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
-const courseCode = selectedExam?.courseCode;
 
-if ((!student && !publicUser) || !selectedExam || !courseCode) {
-  alert("Missing user info or exam selection. Please return to the exam list.");
-  window.location.href = "exam-courses.html";
+if ((!student && !publicUser) || !selectedExam) {
+  alert("Missing user or exam info. Redirecting...");
+  window.location.href = "exam-courses.html"; // or the correct redirect page
 }
 
 const user = student || publicUser;
+
+// Safely fill in the student/public user info
+document.getElementById("student-name").textContent = user.fullName || user.name || "N/A";
+document.getElementById("matric-number").textContent = user.matricNumber || "---";
+document.getElementById("department").textContent = user.department || "---";
+  //const student = JSON.parse(localStorage.getItem("student"));
+//const publicUser = JSON.parse(localStorage.getItem("publicUser"));
+//const selectedExam = JSON.parse(localStorage.getItem("selectedExam"));
+//const courseCode = selectedExam?.courseCode;
+
+//if ((!student && !publicUser) || !selectedExam || !courseCode) {
+//  alert("Missing user info or exam selection. Please return to the exam list.");
+//  window.location.href = "exam-courses.html";
+//}
+
+//const user = student || publicUser;
  // if (!student || !courseCode) {
   //  alert("Missing student or course data. Redirecting...");
  //   window.location.href = "exam-courses.html";
