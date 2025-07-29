@@ -189,9 +189,22 @@ if ((!student && !publicUser) || !selectedExam || !courseCode) {
   alert("Missing user or exam info. Redirecting...");
   window.location.href = "exam-courses.html"; // or the correct redirect page
 }
+let user = null;
+const studentData = localStorage.getItem("student");
+const publicUserData = localStorage.getItem("publicUser");
 
-const user = student || publicUser;
-  //
+if (studentData) {
+  user = JSON.parse(studentData);
+} else if (publicUserData) {
+  user = JSON.parse(publicUserData);
+}
+
+if (!user) {
+  alert("No user logged in");
+  window.location.href = "student-login.html"; // or appropriate login page
+}
+
+// Now safely reference DOM elements
 const nameEl = document.getElementById("student-name");
 const matricEl = document.getElementById("student-matric");
 const deptEl = document.getElementById("student-department");
@@ -199,6 +212,16 @@ const deptEl = document.getElementById("student-department");
 if (nameEl) nameEl.textContent = user.fullName || user.name || "N/A";
 if (matricEl) matricEl.textContent = user.matricNumber || "---";
 if (deptEl) deptEl.textContent = user.department || "---";
+// using /const user = student || publicUser;
+  //
+// using / const nameEl = document.getElementById("student-name");
+//using // const matricEl = document.getElementById("student-matric");
+//using // const deptEl = document.getElementById("student-department");
+
+//using// if (nameEl) nameEl.textContent = user.fullName || user.name || "N/A";
+// using/ if (matricEl) matricEl.textContent = user.matricNumber || "---";
+//using// if (deptEl) deptEl.textContent = user.department || "---";
+  
 // Safely fill in the student/public user info
 //document.getElementById("student-name").textContent = user.fullName || user.name || "N/A";
 //document.getElementById("matric-number").textContent = user.matricNumber || "---";
