@@ -186,7 +186,10 @@
   if (!student || !courseCode) {
     alert("Missing student or course data. Redirecting...");
     window.location.href = "exam-courses.html";
+    return; // Stop further execution
   }
+
+  console.log("Selected Course Code:", courseCode);
 
   // Show user info
   document.getElementById("student-name").textContent = student.name || "Anonymous";
@@ -200,6 +203,7 @@
   let questions = [];
   let answers = {};
   let timeLeft = 600;
+  let currentIndex = 0;
 
   // Fetch exam duration
   function fetchExamDetails() {
@@ -218,29 +222,33 @@
 
   // Load questions
   function fetchQuestions() {
-  if (!courseCode) {
-    alert("No course code selected.");
-    return;
-  }
-
-  return fetch(`https://testpro-mvh8.onrender.com/api/exams/${encodeURIComponent(courseCode)}/questions`)
-    .then(res => {
-      if (!res.ok) throw new Error("Network response not OK");
-      return res.json();
-    })
-    .then(data => {
-      console.log("Fetched questions:", data);
-      if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
-      questions = data.questions;
-      renderQuestions();
-      startTimer();
-    })
-    .catch(err => {
-      console.error("Failed to load questions:", err);
-      alert("Failed to load exam questions.");
-    });
+    if (!courseCode) {
+      alert("No course code selected.");
+      return;
     }
-  
+
+    return fetch(`https://testpro-mvh8.onrender.com/api/exams/${encodeURIComponent(courseCode)}/questions`)
+      .then(async res => {
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+        const text = await res.text();
+        console.log("Raw question response:", text);
+
+        try {
+          const data = JSON.parse(text);
+          if (!data.questions || data.questions.length === 0) throw new Error("No questions found");
+          questions = data.questions;
+          renderQuestion();
+          startTimer();
+        } catch (err) {
+          console.error("Failed to parse or load questions:", err);
+          alert("Failed to load exam questions.");
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch questions:", err);
+        alert("Network or server error while loading questions.");
+      });
+  }
 
   function renderQuestion() {
     const q = questions[currentIndex];
@@ -258,6 +266,15 @@
         </div>
       </div>
     `;
+
+    // Save selected answer
+    const radios = container.querySelectorAll("input[name='option']");
+    radios.forEach(radio => {
+      radio.addEventListener("change", (e) => {
+        answers[q._id] = e.target.value;
+      });
+    });
+  }
 
   function startTimer() {
     const interval = setInterval(() => {
@@ -313,7 +330,7 @@
     }
   });
 
-  // Check session status
+  // Check session status every 30 seconds
   function checkSessionStatus() {
     fetch("https://testpro-mvh8.onrender.com/api/schedule/session/status")
       .then(res => res.json())
@@ -335,7 +352,6 @@
   // Load exam info and questions
   fetchExamDetails().then(fetchQuestions);
   </script>
-
 </body>
   </html>
   
