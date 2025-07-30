@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Public Exam</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { background: #111827; color: #fff; font-family: sans-serif; }
+    .question { margin-bottom: 1.5rem; }
+    .option-label:hover { background-color: #1f2937; cursor: pointer; }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-3xl mx-auto">
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold text-green-400">Online Exam - Public User</h1>
+      <div class="mt-4 bg-gray-800 p-4 rounded-lg">
+        <p><strong>Name:</strong> <span id="student-name">Loading...</span></p>
+        <p><strong>Department:</strong> <span id="student-department">Loading...</span></p>
+        <p><strong>Token:</strong> <span id="student-token">Loading...</span></p>
+        <p><strong>Course:</strong> <span id="course-title">Loading...</span> (<span id="course-code">---</span>)</p>
+        <p><strong>Time Left:</strong> <span id="timer">30:00</span></p>
+      </div>
+    </header>
+
+    <main>
+      <form id="exam-form" class="space-y-6"></form>
+      <button id="submit-btn" class="mt-6 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+        Submit Answers
+      </button>
+    </main>
+
+    <div id="result-box" class="mt-8 p-4 bg-gray-700 rounded-lg hidden">
+      <h2 class="text-xl font-bold text-green-400 mb-2">Result</h2>
+      <p><strong>Score:</strong> <span id="score">0</span> / <span id="total">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    const publicUser = JSON.parse(localStorage.getItem("publicUser"));
+    if (!publicUser) {
+      alert("Not logged in. Please login first.");
+      window.location.href = "public-login.html";
+    }
+
+    const courseData = JSON.parse(localStorage.getItem("selectedCourse"));
+    if (!courseData) {
+      alert("No course selected.");
+      window.location.href = "exam-courses.html";
+    }
+
+    document.getElementById("student-name").textContent = publicUser.name || "N/A";
+    document.getElementById("student-department").textContent = publicUser.department || "---";
+    document.getElementById("student-token").textContent = publicUser.token || "---";
+    document.getElementById("course-title").textContent = courseData.course;
+    document.getElementById("course-code").textContent = courseData.courseCode;
+
+    const timerEl = document.getElementById("timer");
+    let timeLeft = 30 * 60; // 30 minutes
+
+    const updateTimer = () => {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (timeLeft > 0) {
+        timeLeft--;
+      } else {
+        clearInterval(timerInterval);
+        alert("Time is up! Submitting your answers.");
+        document.getElementById("submit-btn").click();
+      }
+    };
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+
+    const formEl = document.getElementById("exam-form");
+
+    async function loadQuestions() {
+      try {
+        const res = await fetch(`https://testpro-mvh8.onrender.com/api/questions/${courseData.courseCode}`);
+        const data = await res.json();
+        if (data.length === 0) {
+          formEl.innerHTML = "<p class='text-red-400'>No questions found for this course.</p>";
+          return;
+        }
+
+        data.forEach((q, i) => {
+          const qDiv = document.createElement("div");
+          qDiv.className = "question";
+
+          qDiv.innerHTML = `
+            <p class="font-semibold mb-2">${i + 1}. ${q.questionText}</p>
+            <div class="space-y-2">
+              ${["a", "b", "c", "d"].map(opt => `
+                <label class="option-label block px-4 py-2 bg-gray-600 rounded">
+                  <input type="radio" name="q${q._id}" value="${opt}" class="mr-2">
+                  ${opt.toUpperCase()}: ${q.options[opt]}
+                </label>
+              `).join("")}
+            </div>
+          `;
+          formEl.appendChild(qDiv);
+        });
+
+        // Store for scoring
+        formEl.dataset.correctAnswers = JSON.stringify(data.map(q => ({
+          id: q._id,
+          answer: q.correctAnswer
+        })));
+      } catch (err) {
+        console.error("Error loading questions", err);
+        formEl.innerHTML = "<p class='text-red-400'>Failed to load questions.</p>";
+      }
+    }
+
+    loadQuestions();
+
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      const correctAnswers = JSON.parse(formEl.dataset.correctAnswers || "[]");
+      const formData = new FormData(formEl);
+      let score = 0;
+
+      const answers = correctAnswers.map(q => {
+        const selected = formData.get(`q${q.id}`);
+        if (selected === q.answer) score++;
+        return { questionId: q.id, selected };
+      });
+
+      // Submit answers
+      try {
+        await fetch("https://testpro-mvh8.onrender.com/api/submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: publicUser.name,
+            token: publicUser.token,
+            courseCode: courseData.courseCode,
+            course: courseData.course,
+            answers
+          })
+        });
+
+        // Show result
+        document.getElementById("score").textContent = score;
+        document.getElementById("total").textContent = correctAnswers.length;
+        document.getElementById("result-box").classList.remove("hidden");
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        clearInterval(timerInterval);
+      } catch (err) {
+        alert("Failed to submit answers.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
