@@ -118,7 +118,7 @@
   const apiUrl = "https://testpro-mvh8.onrender.com/api/exams";
 
   function normalize(text) {
-    return text.toLowerCase().replace(/\s+/g, "");
+    return (text || "").toLowerCase().replace(/\s+/g, "");
   }
 
   // Fetch exams
@@ -153,7 +153,7 @@
           div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
           div.onclick = () => {
             localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "exam.html"; // ✅ Students go to exam.html
+            window.location.href = "exam.html";
           };
           coursesDiv.appendChild(div);
         });
@@ -170,15 +170,14 @@
           div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
           div.onclick = () => {
             localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "exam.html"; // ✅ Admin also goes to exam.html
+            window.location.href = "exam.html";
           };
           coursesDiv.appendChild(div);
         });
 
       } else if (publicUser) {
         const filteredExams = data.filter(exam =>
-          normalize(exam.department || "") === "public" ||
-          normalize(exam.level || "") === "public"
+          normalize(exam.department) === "public" || normalize(exam.level) === "public"
         );
 
         if (filteredExams.length === 0) {
@@ -192,7 +191,7 @@
           div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
           div.onclick = () => {
             localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "public-exam.html"; // ✅ Public users go to public-exam.html
+            window.location.href = "public-exam.html";
           };
           coursesDiv.appendChild(div);
         });
@@ -210,6 +209,7 @@
     localStorage.removeItem("student");
     localStorage.removeItem("admin");
     localStorage.removeItem("publicUser");
+    localStorage.removeItem("selectedExam");
     window.location.href = "student-login.html";
   };
 </script>
