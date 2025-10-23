@@ -155,7 +155,7 @@
   });
 
   function fetchPublicUsers() {
-    fetch("https://testpro-mvh8.onrender.com/api/public-users/dashboard")
+    fetch("https://testpro-lpeo.onrender.com/api/public-users/dashboard")
       .then(res => res.json())
       .then(data => {
         if (!Array.isArray(data.publicUsers)) {
@@ -181,7 +181,7 @@
   }
 
   function downloadCSV() {
-    window.location.href = "https://testpro-mvh8.onrender.com/api/public-users/download";
+    window.location.href = "https://testpro-lpeo.onrender.com/api/public-users/download";
   }
 </script>
 </body>
