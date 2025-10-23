@@ -78,7 +78,7 @@
 
     async function loadQuestions() {
       try {
-        const res = await fetch(`https://testpro-mvh8.onrender.com/api/questions/${courseData.courseCode}`);
+        const res = await fetch(`https://testpro-lpeo.onrender.com/api/questions/${courseData.courseCode}`);
         const data = await res.json();
         if (data.length === 0) {
           formEl.innerHTML = "<p class='text-red-400'>No questions found for this course.</p>";
@@ -129,7 +129,7 @@
 
       // Submit answers
       try {
-        await fetch("https://testpro-mvh8.onrender.com/api/submissions", {
+        await fetch("https://testpro-lpeo.onrender.com/api/submissions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
