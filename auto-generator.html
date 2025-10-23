@@ -163,7 +163,7 @@
       }
 
       try {
-        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/check-email", {
+        const res = await fetch("https://testpro-lpeo.onrender.com/api/tokens/check-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email })
@@ -188,7 +188,7 @@
       successDiv.textContent = "";
 
       try {
-        const res = await fetch("https://testpro-mvh8.onrender.com/api/tokens/generate/manual", {
+        const res = await fetch("https://testpro-lpeo.onrender.com/api/tokens/generate/manual", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: currentEmail })
