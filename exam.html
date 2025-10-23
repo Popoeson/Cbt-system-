@@ -270,7 +270,7 @@ if (deptEl) deptEl.textContent = user.department || "---";
 
   async function fetchExamDetails() {
     try {
-      const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}`);
+      const res = await fetch(`https://testpro-lpeo.onrender.com/api/exams/${courseCode}`);
       const data = await res.json();
       if (!data.exam || !data.exam.duration) throw new Error("Invalid exam data");
       timeLeft = data.exam.duration * 60;
@@ -284,7 +284,7 @@ if (deptEl) deptEl.textContent = user.department || "---";
 
   async function fetchQuestions() {
     try {
-      const res = await fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/questions`);
+      const res = await fetch(`https://testpro-lpeo.onrender.com/api/exams/${courseCode}/questions`);
       const data = await res.json();
       questions = data.questions || [];
 
@@ -337,7 +337,7 @@ if (deptEl) deptEl.textContent = user.department || "---";
     collectAnswer();
     document.getElementById("loading-overlay").style.display = "block";
 
-    fetch(`https://testpro-mvh8.onrender.com/api/exams/${courseCode}/submit`, {
+    fetch(`https://testpro-lpeo.onrender.com/api/exams/${courseCode}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -408,7 +408,7 @@ if (deptEl) deptEl.textContent = user.department || "---";
   });
 
   function checkSessionStatus() {
-    fetch("https://testpro-mvh8.onrender.com/api/schedule/session/status")
+    fetch("https://testpro-lpeo.onrender.com/api/schedule/session/status")
       .then(res => res.json())
       .then(data => {
         if (!data.active) {
