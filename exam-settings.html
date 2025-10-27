@@ -184,7 +184,6 @@
   <button type="submit" id="submitBtn">Set Exam Questions</button>  
   <a class="back-home" href="admin-home.html">← Back to Admin Home</a>
 </form>
-
 <script>
 function toggleTheme() {
   document.body.classList.toggle("dark");
@@ -207,31 +206,25 @@ form.addEventListener("submit", async function (e) {
   const course = document.getElementById("course").value.trim();
   const courseCode = document.getElementById("courseCode").value.trim();
   const numQuestions = parseInt(document.getElementById("numQuestions").value.trim());
-  let department = document.getElementById("department").value.trim();
-  let level = document.getElementById("level").value.trim();
   const duration = parseInt(document.getElementById("duration").value.trim());
+  const level = document.getElementById("level").value.trim();
 
-  // ✅ Check if the user is a public user (based on token or login info)
-  const userType = localStorage.getItem("userType"); // Ensure you save this during login
+  // ✅ Convert multiple select into comma-separated string
+  const departmentSelect = document.getElementById("department");
+  const departments = Array.from(departmentSelect.selectedOptions).map(opt => opt.value);
+  const department = departments.join(", "); // ✅ backend expects string
 
-  if (userType === "public") {
-    department = "Public";
-    level = "Public";
+  if (!course || !courseCode || !department || !level || !duration || !numQuestions) {
+    alert("Please fill in all fields.");
+    return;
   }
 
-  const examCourse = {
-    course,
-    courseCode,
-    numQuestions,
-    department,
-    level,
-    duration
-  };
+  const examCourse = { course, courseCode, department, level, duration, numQuestions };
 
   localStorage.setItem("examCourse", JSON.stringify(examCourse));
 
-  [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = true);
   spinner.style.display = "block";
+  submitBtn.disabled = true;
 
   try {
     const res = await fetch(`${BASE_URL}/api/exams`, {
@@ -243,17 +236,19 @@ form.addEventListener("submit", async function (e) {
     const data = await res.json();
 
     if (!res.ok) {
-      alert("Failed to save exam: " + (data.message || "Unknown error"));
+      alert("❌ Failed to save exam: " + (data.message || "Unknown error"));
     } else {
+      alert("✅ Exam created successfully!");
       window.location.href = "add-questions.html";
     }
   } catch (err) {
-    console.error(err);
-    alert("Server error. Try again later.");
+    console.error("Error:", err);
+    alert("⚠️ Server error. Please try again later.");
   } finally {
     spinner.style.display = "none";
-    [courseCode, numQuestions, duration, submitBtn].forEach(el => el.disabled = false);
+    submitBtn.disabled = false;
   }
 });
+</script>
 </body>
   </html>
