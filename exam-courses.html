@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
           deleteBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             if (confirm(`Delete course: ${exam.course}?`)) {
-              fetch(\`${apiUrl}/${exam._id}`, {
+              fetch(`${apiUrl}/${exam._id}`, {
                 method: "DELETE"
               })
               .then(res => res.json())
