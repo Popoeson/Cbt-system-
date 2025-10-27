@@ -81,19 +81,6 @@
 </head>
 <body>
 
-  <div class="toggle">
-    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
-  </div>
-
-  <h2>Select an Exam</h2>
-
-  <div style="text-align:center; margin-bottom: 20px;">
-    <div id="greeting" style="margin-bottom:10px;"></div>
-    <button id="logout" style="padding: 8px 14px; background: red; color: white; border: none; border-radius: 5px; cursor: pointer;">Logout</button>
-  </div>
-
-  <div id="examList">Loading...</div>
-
 <script>
   // Toggle dark/light mode
   function toggleTheme() {
@@ -115,14 +102,35 @@
     greeting.textContent = `Welcome, ${publicUser.name}`;
   }
 
-  const apiUrl = "https://testpro-lpeo.onrender.com/api/exams";
+  const BASE_URL = "https://testpro-lpeo.onrender.com/api/exams";
 
   function normalize(text) {
     return (text || "").toLowerCase().replace(/\s+/g, "");
   }
 
-  // Fetch exams
-  fetch(apiUrl)
+  // ✅ Delete Exam Function
+  async function deleteExam(courseCode, divElement) {
+    if (!confirm(`Are you sure you want to delete exam "${courseCode}"?`)) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/${courseCode}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert("❌ Failed to delete: " + (data.message || "Unknown error"));
+        return;
+      }
+
+      alert("✅ Exam deleted successfully!");
+      divElement.remove(); // remove from UI instantly
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("⚠️ Server error. Try again later.");
+    }
+  }
+
+  // ✅ Fetch and Render Exams
+  fetch(BASE_URL)
     .then(res => res.json())
     .then(data => {
       coursesDiv.innerHTML = "";
@@ -167,10 +175,23 @@
         data.forEach(exam => {
           const div = document.createElement("div");
           div.className = "course";
-          div.innerHTML = `<strong>${exam.course} (${exam.courseCode})</strong>`;
+          div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong>${exam.course} (${exam.courseCode})</strong>
+              <button style="
+                background:red;
+                color:white;
+                border:none;
+                border-radius:5px;
+                padding:5px 10px;
+                cursor:pointer;
+                font-size:13px;
+              " onclick="event.stopPropagation(); deleteExam('${exam.courseCode}', this.closest('.course'));">Delete</button>
+            </div>
+          `;
           div.onclick = () => {
             localStorage.setItem("selectedExam", JSON.stringify(exam));
-            window.location.href = "exam.html";
+            window.location.href = "add-questions.html";
           };
           coursesDiv.appendChild(div);
         });
@@ -204,10 +225,10 @@
       coursesDiv.textContent = "Error loading exams. Please try again.";
     });
 
-  // Logout button handler
+  // ✅ Logout button handler
   document.getElementById("logout").onclick = () => {
     localStorage.removeItem("student");
-    localStorage.removeItem("admin");
+    localStorage.removeItem("adminUser");
     localStorage.removeItem("publicUser");
     localStorage.removeItem("selectedExam");
     window.location.href = "student-login.html";
