@@ -156,91 +156,105 @@
   <button type="submit" id="registerBtn">Register</button>
     <div class="spinner" id="spinner" style="display:none;">⏳ Registering, please wait...</div>
   </form>
+<script>
+  const CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/IctCenter/image/upload";
+  const CLOUDINARY_UPLOAD_PRESET = "cbt-passport";
 
-  <script>
-    function togglePassword(span) {
-      const pwd = document.getElementById("password");
-      const confirm = document.getElementById("confirmPassword");
-      const isPassword = pwd.type === "password";
-      pwd.type = confirm.type = isPassword ? "text" : "password";
-      span.textContent = isPassword ? "Hide" : "Show";
+  function togglePassword(span) {
+    const pwd = document.getElementById("password");
+    const confirm = document.getElementById("confirmPassword");
+    const isPassword = pwd.type === "password";
+    pwd.type = confirm.type = isPassword ? "text" : "password";
+    span.textContent = isPassword ? "Hide" : "Show";
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("cbtTheme");
+    if (savedTheme === "dark") document.body.classList.add("dark");
+
+    const token = localStorage.getItem("validToken");
+    if (!token) {
+      window.location.href = "token-validate.html";
+      return;
     }
+    document.getElementById("token").value = token;
+  });
 
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+  document.getElementById("registerForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const matric = document.getElementById("matric").value.trim();
+    const level = document.getElementById("level").value;
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const passport = document.getElementById("passport").files[0];
+    const token = document.getElementById("token").value;
+
+    if (!passport) return alert("Please upload a passport photo.");
+    if (!level) return alert("Please select your level.");
+    if (password !== confirmPassword) return alert("Passwords do not match.");
+
+    const registerBtn = document.getElementById("registerBtn");
+    const spinner = document.getElementById("spinner");
+    registerBtn.disabled = true;
+    spinner.style.display = "block";
+
+    try {
+      // 1️⃣ Upload image to Cloudinary
+      const cloudForm = new FormData();
+      cloudForm.append("file", passport);
+      cloudForm.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const uploadRes = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: "POST",
+        body: cloudForm,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.secure_url) throw new Error("Cloudinary upload failed");
+
+      // 2️⃣ Send registration data (using the Cloudinary URL)
+      const studentData = {
+        name,
+        matric,
+        level,
+        email,
+        phone,
+        password,
+        confirmPassword,
+        passport: uploadData.secure_url,
+        token,
+      };
+
+      const res = await fetch("https://testpro-lpeo.onrender.com/api/students/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(studentData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Registration failed");
+
+      alert("Registration successful!");
+      localStorage.removeItem("validToken");
+      window.location.href = "student-login.html";
+    } catch (err) {
+      console.error("Registration error:", err);
+      alert(err.message || "An error occurred. Try again.");
+    } finally {
+      registerBtn.disabled = false;
+      spinner.style.display = "none";
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const savedTheme = localStorage.getItem("cbtTheme");
-      if (savedTheme === "dark") document.body.classList.add("dark");
-
-      const token = localStorage.getItem("validToken");
-      if (!token) {
-        window.location.href = "token-validate.html";
-        return;
-      }
-      document.getElementById("token").value = token;
-    });
-
-    document.getElementById("registerForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const name = document.getElementById("name").value.trim();
-      const matric = document.getElementById("matric").value.trim();
-      const level = document.getElementById("level").value;
-      const email = document.getElementById("email").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const password = document.getElementById("password").value;
-      const confirmPassword = document.getElementById("confirmPassword").value;
-      const passport = document.getElementById("passport").files[0];
-      const token = document.getElementById("token").value;
-
-      if (!passport) return alert("Please upload a passport photo.");
-      if (!level) return alert("Please select your level.");
-      if (!email.includes("@") || !email.includes(".")) return alert("Enter a valid email.");
-      if (password !== confirmPassword) return alert("Passwords do not match.");
-
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("matric", matric);
-      formData.append("level", level);
-      formData.append("email", email);
-      formData.append("phone", phone);
-      formData.append("password", password);
-      formData.append("confirmPassword", confirmPassword); 
-      formData.append("passport", passport);
-      formData.append("token", token);
-
-      const registerBtn = document.getElementById("registerBtn");
-      const spinner = document.getElementById("spinner");
-      registerBtn.disabled = true;
-      spinner.style.display = "block";
-
-      try {
-        const res = await fetch("https://testpro-lpeo.onrender.com/api/students/register", {
-          method: "POST",
-          body: formData
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert(data.message || "Registration failed");
-          throw new Error(data.message);
-        }
-
-        alert("Registration successful!");
-        localStorage.removeItem("validToken");
-        window.location.href = "student-login.html";
-      } catch (err) {
-        console.error("Registration error:", err);
-        alert("An error occurred. Try again.");
-      } finally {
-        registerBtn.disabled = false;
-        spinner.style.display = "none";
-      }
-    });
-  </script>
+  });
+                                                                                           </script>
 </body>
   </html>
