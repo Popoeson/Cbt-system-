@@ -143,53 +143,65 @@
   <ul id="sessionList"></ul>
 
   <script>
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
-    }
+  function toggleTheme() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+  }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedTheme = localStorage.getItem("cbtTheme");
-      if (savedTheme === "dark") {
-        document.body.classList.add("dark");
-      }
-    });
-
-    async function fetchDashboardData() {
-      try {
-        const res = await fetch("https://testpro-lpeo.onrender.com/api/students/dashboard");
-        const data = await res.json();
-
-        const tableBody = document.querySelector("#studentsTable tbody");
-        tableBody.innerHTML = "";
-
-        data.students.forEach((student) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td><img src="${student.passport}" alt="Passport" /></td>
-            <td>${student.name}</td>
-            <td>${student.matric}</td>
-            <td>${student.department}</td>
-            <td>${student.phone}</td>
-            <td>${student.email}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        const sessionList = document.getElementById("sessionList");
-        sessionList.innerHTML = "";
-        data.sessions.forEach((session) => {
-          const li = document.createElement("li");
-          li.textContent = session;
-          sessionList.appendChild(li);
-        });
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
-      }
-    }
-   
-  // Filter search (corrected)
   window.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("cbtTheme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark");
+    }
+    fetchDashboardData();
+  });
+
+  async function fetchDashboardData() {
+    try {
+      const res = await fetch("https://testpro-lpeo.onrender.com/api/students/dashboard");
+      const data = await res.json();
+
+      const tableBody = document.querySelector("#studentsTable tbody");
+      tableBody.innerHTML = "";
+
+      data.students.forEach((student) => {
+        const passportUrl = student.passport && student.passport.startsWith("http")
+          ? student.passport
+          : "https://res.cloudinary.com/demo/image/upload/v1699999999/default-avatar.png"; // fallback
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>
+            <img 
+              src="${passportUrl}" 
+              alt="Passport"
+              onerror="this.onerror=null;this.src='https://res.cloudinary.com/demo/image/upload/v1699999999/default-avatar.png';"
+            />
+          </td>
+          <td>${student.name}</td>
+          <td>${student.matric}</td>
+          <td>${student.department}</td>
+          <td>${student.phone}</td>
+          <td>${student.email}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      const sessionList = document.getElementById("sessionList");
+      sessionList.innerHTML = "";
+      data.sessions.forEach((session) => {
+        const li = document.createElement("li");
+        li.textContent = session;
+        sessionList.appendChild(li);
+      });
+    } catch (error) {
+      console.error("Failed to load dashboard data", error);
+      alert("Failed to load dashboard data. Please try again later.");
+    }
+  }
+
+  // 🔍 Filter search
+  document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("search");
     const tbody = document.querySelector("#studentsTable tbody");
 
@@ -203,12 +215,10 @@
       });
     });
   });
-    
-    function downloadCSV() {
-      window.location.href = "https://testpro-lpeo.onrender.com/api/students/download";
-    }
 
-    fetchDashboardData();
+  function downloadCSV() {
+    window.location.href = "https://testpro-lpeo.onrender.com/api/students/download";
+  }
   </script>
 </body>
 </html>
