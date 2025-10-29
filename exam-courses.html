@@ -150,6 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const studentDept = normalize(student.department);
         const studentLevel = normalize(student.level);
 
+  // Filter Logic
+
         const filteredExams = data.filter(exam =>
           normalize(exam.department) === studentDept && normalize(exam.level) === studentLevel
         );
@@ -183,12 +185,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong>${exam.course} (${exam.courseCode})</strong>
             <button class="delete-btn">Delete</button>
           `;
-
+  // Delete Exam
           const deleteBtn = div.querySelector(".delete-btn");
           deleteBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             if (confirm(`Delete course: ${exam.course}?`)) {
-              fetch(`${apiUrl}/${exam._id}`, {
+              fetch(`${apiUrl}/${exam.courseCode}`, {
                 method: "DELETE"
               })
               .then(res => res.json())
