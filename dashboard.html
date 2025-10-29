@@ -30,14 +30,33 @@
       color: var(--text-color);
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       transition: background-color 0.3s, color 0.3s;
     }
 
+    /* Header container */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: var(--box-bg);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      color: var(--header-color);
+      font-size: 1.5rem;
+      margin: 0;
+      text-align: center;
+      flex: 1 1 100%;
+    }
+
     .toggle {
-      position: absolute;
-      top: 15px;
-      right: 20px;
+      text-align: right;
+      flex: 1 1 100%;
+      margin-top: 10px;
     }
 
     .toggle button,
@@ -58,7 +77,11 @@
       color: white;
     }
 
-    h1, h2 {
+    main {
+      padding: 20px;
+    }
+
+    h2 {
       text-align: center;
       color: var(--header-color);
     }
@@ -67,12 +90,15 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      overflow-x: auto;
+      display: block;
     }
 
     .student-table th, .student-table td {
       border: 1px solid #555;
       padding: 10px;
       text-align: left;
+      white-space: nowrap;
     }
 
     .student-table th {
@@ -100,7 +126,8 @@
     #sessionList li {
       margin-bottom: 5px;
     }
-      #search {
+
+    #search {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
@@ -110,115 +137,122 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-    
+
+    /* Responsive tweaks */
+    @media (min-width: 600px) {
+      .header {
+        flex-wrap: nowrap;
+      }
+
+      .header h1 {
+        flex: unset;
+        text-align: left;
+        font-size: 1.8rem;
+      }
+
+      .toggle {
+        flex: unset;
+        margin-top: 0;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <div class="toggle">
-    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
-  </div>
+  <header class="header">
+    <h1>CBT Student Dashboard</h1>
+    <div class="toggle">
+      <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+    </div>
+  </header>
 
-  <h1>CBT Student Dashboard</h1>
+  <main>
+    <button class="download-btn" onclick="downloadCSV()">📥 Download Registered Students</button>
 
-  <button class="download-btn" onclick="downloadCSV()">📥 Download Registered Students</button>
+    <h2>Registered Students</h2>
+    <input type="text" id="search" placeholder="Search by name, matric, or mail..." />
+    <table class="student-table" id="studentsTable">
+      <thead>
+        <tr>
+          <th>Passport</th>
+          <th>Full Name</th>
+          <th>Matric No</th>
+          <th>Department</th>
+          <th>Phone</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <h2>Registered Students</h2>
-  <input type="text" id="search" placeholder="Search by name, matric, or mail..." />
-  <table class="student-table" id="studentsTable">
-    <thead>
-      <tr>
-        <th>Passport</th>
-        <th>Full Name</th>
-        <th>Matric No</th>
-        <th>Department</th>
-        <th>Phone</th>
-        <th>Email</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h2>Active Login Sessions</h2>
-  <ul id="sessionList"></ul>
+    <h2>Active Login Sessions</h2>
+    <ul id="sessionList"></ul>
+  </main>
 
   <script>
-  function toggleTheme() {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const savedTheme = localStorage.getItem("cbtTheme");
-    if (savedTheme === "dark") {
-      document.body.classList.add("dark");
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
     }
-    fetchDashboardData();
-  });
 
-  async function fetchDashboardData() {
-    try {
-      const res = await fetch("https://testpro-lpeo.onrender.com/api/students/dashboard");
-      const data = await res.json();
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+    });
 
-      const tableBody = document.querySelector("#studentsTable tbody");
-      tableBody.innerHTML = "";
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch("https://testpro-lpeo.onrender.com/api/students/dashboard");
+        const data = await res.json();
 
-      data.students.forEach((student) => {
-        const passportUrl = student.passport && student.passport.startsWith("http")
-          ? student.passport
-          : "https://res.cloudinary.com/demo/image/upload/v1699999999/default-avatar.png"; // fallback
+        const tableBody = document.querySelector("#studentsTable tbody");
+        tableBody.innerHTML = "";
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>
-            <img 
-              src="${passportUrl}" 
-              alt="Passport"
-              onerror="this.onerror=null;this.src='https://res.cloudinary.com/demo/image/upload/v1699999999/default-avatar.png';"
-            />
-          </td>
-          <td>${student.name}</td>
-          <td>${student.matric}</td>
-          <td>${student.department}</td>
-          <td>${student.phone}</td>
-          <td>${student.email}</td>
-        `;
-        tableBody.appendChild(row);
-      });
+        data.students.forEach((student) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><img src="${student.passport}" alt="Passport" /></td>
+            <td>${student.name}</td>
+            <td>${student.matric}</td>
+            <td>${student.department}</td>
+            <td>${student.phone}</td>
+            <td>${student.email}</td>
+          `;
+          tableBody.appendChild(row);
+        });
 
-      const sessionList = document.getElementById("sessionList");
-      sessionList.innerHTML = "";
-      data.sessions.forEach((session) => {
-        const li = document.createElement("li");
-        li.textContent = session;
-        sessionList.appendChild(li);
-      });
-    } catch (error) {
-      console.error("Failed to load dashboard data", error);
-      alert("Failed to load dashboard data. Please try again later.");
+        const sessionList = document.getElementById("sessionList");
+        sessionList.innerHTML = "";
+        data.sessions.forEach((session) => {
+          const li = document.createElement("li");
+          li.textContent = session;
+          sessionList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      }
     }
-  }
 
-  // 🔍 Filter search
-  document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("search");
-    const tbody = document.querySelector("#studentsTable tbody");
+    window.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.getElementById("search");
+      const tbody = document.querySelector("#studentsTable tbody");
 
-    searchInput.addEventListener("input", () => {
-      const searchValue = searchInput.value.toLowerCase();
-      const rows = tbody.querySelectorAll("tr");
+      searchInput.addEventListener("input", () => {
+        const searchValue = searchInput.value.toLowerCase();
+        const rows = tbody.querySelectorAll("tr");
 
-      rows.forEach(row => {
-        const rowText = row.textContent.toLowerCase();
-        row.style.display = rowText.includes(searchValue) ? "" : "none";
+        rows.forEach(row => {
+          const rowText = row.textContent.toLowerCase();
+          row.style.display = rowText.includes(searchValue) ? "" : "none";
+        });
       });
     });
-  });
 
-  function downloadCSV() {
-    window.location.href = "https://testpro-lpeo.onrender.com/api/students/download";
-  }
+    function downloadCSV() {
+      window.location.href = "https://testpro-lpeo.onrender.com/api/students/download";
+    }
+
+    fetchDashboardData();
   </script>
 </body>
 </html>
