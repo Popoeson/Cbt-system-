@@ -359,7 +359,9 @@ if (deptEl) deptEl.textContent = user.department || "---";
         const exam = data.score ?? "N/A";
         const total = data.totalScore ?? (ca !== "N/A" && exam !== "N/A" ? ca + exam : "N/A");
 
-        alert(`✅ ${data.message}\n\n📚 CA Score: ${ca}\n📝 Exam Score: ${exam}\n🧮 Total Score: ${total}`);
+       // alert(`✅ ${data.message}\n\n📚 CA Score: ${ca}\n📝 Exam Score: ${exam}\n🧮 Total Score: ${total}`);
+
+      alert(`✅ ${data.message}`);
       } else {
         alert(data.message || "Submitted.");
       }
